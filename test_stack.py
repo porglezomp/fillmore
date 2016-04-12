@@ -86,3 +86,5 @@ def test_dup():
 def test_quiet():
     assert eval_program("push 3; push 5; add quiet") == [3, 5, 8]
     assert eval_program("push 3; push 5; multiply quiet") == [3, 5, 15]
+    assert eval_program("push 3; push 5; subtract quiet") == [3, 5, -2]
+    assert eval_program("push 3; push 5; divide quiet") == [3, 5, 0.6]

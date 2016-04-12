@@ -30,11 +30,11 @@ def eval_program(program):
             stack.pop()
         elif is_operator(opcode):
             # This uses the top element as the second operand
-            # because it allows for division and subtraction to be less 
+            # because it allows for division and subtraction to be less
             # irritating (dividing by 5 -> push 5; divide).
             if is_quiet:
                 second = stack[-1]
-                first = stack[-2]                
+                first = stack[-2]
             else:
                 second = stack.pop()
                 first = stack.pop()
@@ -52,6 +52,7 @@ def eval_program(program):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
     return stack
+
 
 def preform_operation(first, second, opcode):
     if opcode == "add":
@@ -76,5 +77,6 @@ def is_operator(opcode):
         return True
     else:
         return False
+
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
