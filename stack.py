@@ -46,7 +46,7 @@ def parse_program(code):
     >>> list(parse_program('push 1'))
     [Instr('push', [1.0])]
 
-    Various sigils from Unicode are supported as alternate versions of
+    Various sigils from_ Unicode are supported as alternate versions of
     operations, for example:
     >>> list(parse_program('← 1'))
     [Instr('push', [1.0])]
@@ -62,48 +62,38 @@ def parse_program(code):
         yield Instr(op, args)
 
 
-# TODO: This is pretty stringly typed, perhaps return a custom object?
-def next_instruction(program):
-    split_program = program.split(";")
-    for instuction in split_program:
-        if instuction == "":
-            raise StopIteration
-        else:
-            yield instuction.strip()
-
-
 def eval_program(program):
-    instuction_gen = next_instruction(program)
+    instuctions = parse_program(program)
     stack = []
-    for instuction in instuction_gen:
-        instuction = instuction.split()
-        opcode = instuction[0]
-        if opcode == "push":
-            stack.append(int(instuction[1]))
-        elif opcode == "pop":
+    for instr in instuctions:
+        if instr.op == "push":
+            stack.append(instr.args[0])
+        elif instr.op == "pop":
             stack.pop()
-        elif is_operator(opcode):
-            a = stack.pop()
+        elif is_operator(instr.op):
             b = stack.pop()
-            # This uses b [op] a instead of a [op] b
-            # because it allows for division and subtraction to be less
-            # irritating (dividing by 5 -> push 5; divide).
-            if opcode == "add":
-                c = b + a
-            elif opcode == "subtract":
-                c = b - a
-            elif opcode == "multiply":
-                c = b * a
-            elif opcode == "divide":
-                c = b / a
+            a = stack.pop()
+            # b is the top of the stack, and a is the item before it, so
+            # doing `push 5 ; div` is division by 5
+            if instr.op == 'add':
+                c = a + b
+            elif instr.op == 'sub':
+                c = a - b
+            elif instr.op == 'mul':
+                c = a * b
+            elif instr.op == 'div':
+                c = a / b
+            elif instr.op == 'pow':
+                c = a ** b
             stack.append(c)
-        elif opcode == "swap":
-            # "swap" aliases to "swap 1"
-            swap_gap = get_argument(instuction, 1)
-            swap_from, swap_to = -1, -(1 + swap_gap)
-            stack[swap_from], stack[swap_to] = stack[swap_to], stack[swap_from]
-        elif opcode == "dup":
-            dup_depth = get_argument(instuction, 1)  # "dup" aliases to "dup 1"
+        elif instr.op == 'swap':
+            # `swap` aliased to `swap 1`
+            swap_gap = int(instr.args[0] if instr.args else 1)
+            from_, to = -1, -(1 + swap_gap)
+            stack[from_], stack[to] = stack[to], stack[from_]
+        elif instr.op == 'dup':
+            # `dup` aliases to `dup 1`
+            dup_depth = int(instr.args[0] if instr.args else 1)
             if dup_depth == 0:
                 continue
             if dup_depth > len(stack):
@@ -119,8 +109,5 @@ def get_argument(instuction, default):
         return default
 
 
-def is_operator(opcode):
-    if opcode in ["add", "subtract", "multiply", "divide"]:
-        return True
-    else:
-        return False
+def is_operator(op):
+    return op in ['add', 'sub', 'mul', 'div']
