@@ -61,3 +61,15 @@ def test_swap():
         assert eval_program("push 1; push 2; swap 2")
         assert eval_program("push 1; push 2; push 3; swap 3")
 
+
+def test_dup():
+    assert eval_program("push 1; dup 0") == [1]
+    assert eval_program("push 1; dup") == [1, 1]
+    assert eval_program("push 1; dup 1") == [1, 1]
+    assert eval_program("push 1; push 2; dup 2") == [1, 2, 1, 2]
+    assert eval_program("push 1; dup; push 2; dup 3") == [1, 1, 2, 1, 1, 2]
+    with pytest.raises(IndexError):
+        # Should duping an empty stack be an error?
+        # It technially duplicates the top element, which is nothing.
+        assert eval_program("dup")
+        assert eval_program("push 1; dup 2")

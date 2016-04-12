@@ -42,6 +42,13 @@ def eval_program(program):
             swap_gap = get_argument(instuction, 1)
             stack[-1], stack[-(1 + swap_gap)
                              ] = stack[-(swap_gap + 1)], stack[-1]
+        elif opcode == "dup":
+            dup_depth = get_argument(instuction, 1)  # "dup" aliases to "dup 1"
+            if dup_depth == 0:
+                continue
+            if dup_depth > len(stack):
+                raise IndexError
+            stack.extend(stack[-dup_depth:])
     return stack
 
 
