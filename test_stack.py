@@ -1,3 +1,5 @@
+from __future__ import division
+
 import stack
 from stack import next_instruction, eval_program
 
@@ -37,6 +39,12 @@ def test_simple_operators():
     with pytest.raises(ZeroDivisionError):
         # IDEA: division by zero pushes nothing? halts program? pushes zero?
         assert eval_program("push 1; push 0; divide")
+
+
+def test_float_division():
+    assert eval_program("push 5; push 2; divide") == [2.5]
+    assert eval_program("push 4; push 5; divide") == [0.8]
+    assert eval_program("push 1; push 100; divide") == [0.01]
 
 
 def test_complex_operators():
