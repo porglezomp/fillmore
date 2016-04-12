@@ -2,22 +2,40 @@
 from __future__ import division
 
 
-sigil_to_op = {
-    '←': 'push',
-    '→': 'pop',
-    '↔': 'swap',
-    '↑': 'jump',
-    '+': 'add',
-    '-': 'sub',
-    '−': 'sub',  # A minus isn't the same thing as a hyphen!
-    '*': 'mul',
-    '×': 'mul',
-    '/': 'div',
-    '÷': 'div',
-    '^': 'pow',
-    '!': 'not',
-    '¬': 'not',
-}
+class Instr(object):
+    sigil_to_op = {
+        '←': 'push', '→': 'pop',
+        '↔': 'swap',
+        '↑': 'jump',
+        '+': 'add',
+        '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
+        '*': 'mul', '×': 'mul',
+        '/': 'div', '÷': 'div',
+        '^': 'pow',
+        '!': 'not', '¬': 'not',
+    }
+
+    def __init__(self, op, args=None, prefix=None):
+        args = [] if args is None else args
+        prefix = [] if prefix is None else prefix
+
+        if op in Instr.sigil_to_op:
+            op = Instr.sigil_to_op[op]
+        self.op, self.args, self.prefix = op, args, prefix
+
+    def __repr__(self):
+        if self.prefix:
+            return 'Instr({!r}, {!r}, {!r})'.format(
+                self.op, self.args, self.prefix)
+        elif self.args:
+            return 'Instr({!r}, {!r})'.format(self.op, self.args)
+        else:
+            return 'Instr({!r})'.format(self.op)
+
+    def __eq__(self, other):
+        return (self.op == other.op and
+                self.args == other.args and
+                self.prefix == other.prefix)
 
 
 def parse_program(code):
@@ -25,22 +43,20 @@ def parse_program(code):
     Take a source code string and yield a sequence of instructions
 
     >>> list(parse_program('push 1'))
-    [{'prefix': [], 'args': [1.0], 'op': 'push'}]
+    [Instr('push', [1.0])]
 
     Various sigils from Unicode are supported as alternate versions of
     operations, for example:
     >>> list(parse_program('← 1'))
-    [{'prefix': [], 'args': [1.0], 'op': 'push'}]
+    [Instr('push', [1.0])]
     >>> list(parse_program('↔'))
-    [{'prefix': [], 'args': [], 'op': 'swap'}]
+    [Instr('swap')]
     """
     for line in code.split('\n'):
         parts = line.split()
         op = parts[0]
-        if op in sigil_to_op:
-            op = sigil_to_op[op]
         args = [float(arg) for arg in parts[1:]]
-        yield {'op': op, 'prefix': [], 'args': args}
+        yield Instr(op, args)
 
 
 # TODO: This is pretty stringly typed, perhaps return a custom object?

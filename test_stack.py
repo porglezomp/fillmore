@@ -1,25 +1,25 @@
 from __future__ import division
 
 import stack
-from stack import next_instruction, eval_program
+from stack import next_instruction, eval_program, Instr
 
 import pytest
 
 
+def test_unicode_sigil():
+    for sigil in Instr.sigil_to_op:
+        assert Instr(sigil) == Instr(Instr.sigil_to_op[sigil])
+
+
 def test_parse():
     program = stack.parse_program('push 1\npop\nswap')
-    assert list(program) == [
-        {'op': 'push', 'prefix': [], 'args': [1]},
-        {'op': 'pop', 'prefix': [], 'args': []},
-        {'op': 'swap', 'prefix': [], 'args': []},
-    ]
+    assert list(program) == [Instr('push', [1]), Instr('pop'), Instr('swap')]
 
 
 def test_parse_unicode():
-    for sigil in stack.sigil_to_op:
+    for sigil in Instr.sigil_to_op:
         instruction = next(stack.parse_program(sigil))
-        expected = {'op': stack.sigil_to_op[sigil], 'prefix': [], 'args': []}
-        assert instruction == expected
+        assert instruction == Instr(Instr.sigil_to_op[sigil])
 
 
 def test_next_instruction():
