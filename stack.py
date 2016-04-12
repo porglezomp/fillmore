@@ -1,16 +1,44 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 
+sigil_to_op = {
+    '←': 'push',
+    '→': 'pop',
+    '↔': 'swap',
+    '↑': 'jump',
+    '+': 'add',
+    '-': 'sub',
+    '−': 'sub',  # A minus isn't the same thing as a hyphen!
+    '*': 'mul',
+    '×': 'mul',
+    '/': 'div',
+    '÷': 'div',
+    '^': 'pow',
+    '!': 'not',
+    '¬': 'not',
+}
+
+
 def parse_program(code):
-    """
+    r"""
     Take a source code string and yield a sequence of instructions
 
     >>> list(parse_program('push 1'))
     [{'prefix': [], 'args': [1.0], 'op': 'push'}]
+
+    Various sigils from Unicode are supported as alternate versions of
+    operations, for example:
+    >>> list(parse_program('← 1'))
+    [{'prefix': [], 'args': [1.0], 'op': 'push'}]
+    >>> list(parse_program('↔'))
+    [{'prefix': [], 'args': [], 'op': 'swap'}]
     """
     for line in code.split('\n'):
         parts = line.split()
         op = parts[0]
+        if op in sigil_to_op:
+            op = sigil_to_op[op]
         args = [float(arg) for arg in parts[1:]]
         yield {'op': op, 'prefix': [], 'args': args}
 

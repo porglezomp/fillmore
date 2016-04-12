@@ -15,6 +15,13 @@ def test_parse():
     ]
 
 
+def test_parse_unicode():
+    for sigil in stack.sigil_to_op:
+        instruction = next(stack.parse_program(sigil))
+        expected = {'op': stack.sigil_to_op[sigil], 'prefix': [], 'args': []}
+        assert instruction == expected
+
+
 def test_next_instruction():
     program = next_instruction("push 1; pop; swap;")
     assert next(program) == "push 1"
