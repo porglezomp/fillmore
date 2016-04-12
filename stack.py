@@ -1,3 +1,6 @@
+# Make Python 2 use float division instead of integer division
+from __future__ import division
+
 def next_instruction(program):
     split_program = program.split(";")
     for instuction in split_program:
