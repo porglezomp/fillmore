@@ -18,6 +18,12 @@ def eval_program(program):
     for instuction in instuction_gen:
         instuction = instuction.split()
         opcode = instuction[0]
+
+        if "quiet" in instuction:
+            is_quiet = True
+        else:
+            is_quiet = False
+
         if opcode == "push":
             stack.append(int(instuction[1]))
         elif opcode == "pop":
@@ -26,8 +32,12 @@ def eval_program(program):
             # This uses the top element as the second operand
             # because it allows for division and subtraction to be less 
             # irritating (dividing by 5 -> push 5; divide).
-            second = stack.pop()
-            first = stack.pop()
+            if is_quiet:
+                second = stack[-1]
+                first = stack[-2]                
+            else:
+                second = stack.pop()
+                first = stack.pop()
             stack.append(preform_operation(first, second, opcode))
         elif opcode == "swap":
             # "swap" aliases to "swap 1"
@@ -52,8 +62,6 @@ def preform_operation(first, second, opcode):
         return first * second
     elif opcode == "divide":
         return first / second
-
-
 
 
 def get_argument(instuction, default):

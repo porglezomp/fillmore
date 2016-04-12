@@ -81,3 +81,8 @@ def test_dup():
         # It technially duplicates the top element, which is nothing.
         assert eval_program("dup")
         assert eval_program("push 1; dup 2")
+
+
+def test_quiet():
+    assert eval_program("push 3; push 5; add quiet") == [3, 5, 8]
+    assert eval_program("push 3; push 5; multiply quiet") == [3, 5, 15]
