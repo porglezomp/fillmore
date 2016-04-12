@@ -40,10 +40,10 @@ def test_simple_operators():
 
 
 def test_complex_operators():
-    assert eval_program("push 2; push 3; push 5; add; multiply") == [
-        2 * (3 + 5)]
-    assert eval_program("push 36; push 24; push 6; divide; divide;") == [
-        36 / (24 / 6)]
+    program = "push 2; push 3; push 5; add; multiply"
+    assert eval_program(program) == [2 * (3 + 5)]
+    program = "push 36; push 24; push 6; divide; divide;"
+    assert eval_program(program) == [36 / (24 / 6)]
     program = "push 10; push 4; subtract; push 6; push 2; subtract; multiply"
     assert eval_program(program) == [(10 - 4) * (6 - 2)]
 

@@ -40,8 +40,8 @@ def eval_program(program):
         elif opcode == "swap":
             # "swap" aliases to "swap 1"
             swap_gap = get_argument(instuction, 1)
-            stack[-1], stack[-(1 + swap_gap)
-                             ] = stack[-(swap_gap + 1)], stack[-1]
+            swap_from, swap_to = -1, -(1 + swap_gap)
+            stack[swap_from], stack[swap_to] = stack[swap_to], stack[swap_from]
         elif opcode == "dup":
             dup_depth = get_argument(instuction, 1)  # "dup" aliases to "dup 1"
             if dup_depth == 0:
