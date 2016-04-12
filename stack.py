@@ -23,20 +23,12 @@ def eval_program(program):
         elif opcode == "pop":
             stack.pop()
         elif is_operator(opcode):
-            a = stack.pop()
-            b = stack.pop()
-            # This uses b [op] a instead of a [op] b
-            # because it allows for division and subtraction to be less
+            # This uses the top element as the second operand
+            # because it allows for division and subtraction to be less 
             # irritating (dividing by 5 -> push 5; divide).
-            if opcode == "add":
-                c = b + a
-            elif opcode == "subtract":
-                c = b - a
-            elif opcode == "multiply":
-                c = b * a
-            elif opcode == "divide":
-                c = b / a
-            stack.append(c)
+            second = stack.pop()
+            first = stack.pop()
+            stack.append(preform_operation(first, second, opcode))
         elif opcode == "swap":
             # "swap" aliases to "swap 1"
             swap_gap = get_argument(instuction, 1)
@@ -50,6 +42,18 @@ def eval_program(program):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
     return stack
+
+def preform_operation(first, second, opcode):
+    if opcode == "add":
+        return first + second
+    elif opcode == "subtract":
+        return first - second
+    elif opcode == "multiply":
+        return first * second
+    elif opcode == "divide":
+        return first / second
+
+
 
 
 def get_argument(instuction, default):
