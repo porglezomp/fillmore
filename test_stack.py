@@ -6,6 +6,15 @@ from stack import next_instruction, eval_program
 import pytest
 
 
+def test_parse():
+    program = stack.parse_program('push 1\npop\nswap')
+    assert list(program) == [
+        {'op': 'push', 'prefix': [], 'args': [1]},
+        {'op': 'pop', 'prefix': [], 'args': []},
+        {'op': 'swap', 'prefix': [], 'args': []},
+    ]
+
+
 def test_next_instruction():
     program = next_instruction("push 1; pop; swap;")
     assert next(program) == "push 1"

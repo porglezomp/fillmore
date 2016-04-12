@@ -1,5 +1,18 @@
-# Make Python 2 use float division instead of integer division
 from __future__ import division
+
+
+def parse_program(code):
+    """
+    Take a source code string and yield a sequence of instructions
+
+    >>> list(parse_program('push 1'))
+    [{'prefix': [], 'args': [1.0], 'op': 'push'}]
+    """
+    for line in code.split('\n'):
+        parts = line.split()
+        op = parts[0]
+        args = [float(arg) for arg in parts[1:]]
+        yield {'op': op, 'prefix': [], 'args': args}
 
 
 # TODO: This is pretty stringly typed, perhaps return a custom object?
@@ -64,5 +77,3 @@ def is_operator(opcode):
         return True
     else:
         return False
-
-print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
