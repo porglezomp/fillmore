@@ -40,7 +40,24 @@ def test_simple_operators():
 
 
 def test_complex_operators():
-    assert eval_program("push 2; push 3; push 5; add; multiply") == [2 * (3 + 5)]
-    assert eval_program("push 36; push 24; push 6; divide; divide;") == [36 / (24 / 6)]
+    assert eval_program("push 2; push 3; push 5; add; multiply") == [
+        2 * (3 + 5)]
+    assert eval_program("push 36; push 24; push 6; divide; divide;") == [
+        36 / (24 / 6)]
     program = "push 10; push 4; subtract; push 6; push 2; subtract; multiply"
     assert eval_program(program) == [(10 - 4) * (6 - 2)]
+
+
+def test_swap():
+    assert eval_program("push 1; swap 0") == [1]
+    assert eval_program("push 1; push 2; swap") == [2, 1]
+    assert eval_program("push 1; push 2; swap 1") == [2, 1]
+    assert eval_program("push 1; push 2; push 3; swap") == [1, 3, 2]
+    assert eval_program("push 1; push 2; push 3; push 4; swap 3;") == [
+        4, 2, 3, 1, ]
+    with pytest.raises(IndexError):
+        assert eval_program("swap")
+        assert eval_program("push 1; swap")
+        assert eval_program("push 1; push 2; swap 2")
+        assert eval_program("push 1; push 2; push 3; swap 3")
+

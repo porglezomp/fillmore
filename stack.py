@@ -1,6 +1,8 @@
 # Make Python 2 use float division instead of integer division
 from __future__ import division
 
+
+# TODO: This is pretty stringly typed, perhaps return a custom object?
 def next_instruction(program):
     split_program = program.split(";")
     for instuction in split_program:
@@ -35,7 +37,19 @@ def eval_program(program):
             elif opcode == "divide":
                 c = b / a
             stack.append(c)
+        elif opcode == "swap":
+            # "swap" aliases to "swap 1"
+            swap_gap = get_argument(instuction, 1)
+            stack[-1], stack[-(1 + swap_gap)
+                             ] = stack[-(swap_gap + 1)], stack[-1]
     return stack
+
+
+def get_argument(instuction, default):
+    try:
+        return int(instuction[1])
+    except IndexError:
+        return default
 
 
 def is_operator(opcode):
