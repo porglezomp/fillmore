@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+import re
 
 
 class Instr(object):
@@ -52,8 +53,10 @@ def parse_program(code):
     >>> list(parse_program('↔'))
     [Instr('swap')]
     """
-    for line in code.split('\n'):
-        parts = line.split()
+    for line in re.split('\n|;', code):
+        parts = line.strip().split()
+        if not parts:
+            continue
         op = parts[0]
         args = [float(arg) for arg in parts[1:]]
         yield Instr(op, args)

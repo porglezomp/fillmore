@@ -12,8 +12,15 @@ def test_unicode_sigil():
 
 
 def test_parse():
-    program = stack.parse_program('push 1\npop\nswap')
-    assert list(program) == [Instr('push', [1]), Instr('pop'), Instr('swap')]
+    expected = [Instr('push', [1]), Instr('pop'), Instr('swap')]
+    # Any mix of semicolons and newlines should work
+    assert list(stack.parse_program('push 1\npop\nswap')) == expected
+    assert list(stack.parse_program('push 1; pop; swap')) == expected
+    assert list(stack.parse_program('push 1; pop\nswap')) == expected
+    # Spaces shouldn't matter for semicolons
+    assert list(stack.parse_program('push 1 ;pop;  swap')) == expected
+    # And empty instructions should be skipped
+    assert list(stack.parse_program('push 1 ;;; pop\n;\nswap')) == expected
 
 
 def test_parse_unicode():
