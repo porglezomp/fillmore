@@ -33,7 +33,7 @@ def test_push_and_pop():
     assert eval_program("push 1; push 2; push 3;") == [1, 2, 3]
     assert eval_program("push 2; pop") == []
     with pytest.raises(IndexError):
-        # IDEA: poping an empty list does nothing instead of index error?
+        # IDEA: popping an empty list does nothing instead of index error?
         eval_program("pop")
 
 
@@ -45,6 +45,7 @@ def test_simple_operators():
     assert eval_program("push 10; push 10; mul;") == [100]
     assert eval_program("push 10; push 2; div") == [5.0]
     assert eval_program("push 3; push 2; div") == [1.5]
+    assert eval_program("push 4; push 4; pow") == [4**4]
     with pytest.raises(IndexError):
         assert eval_program("push 1; add")
     with pytest.raises(IndexError):

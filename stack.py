@@ -74,7 +74,7 @@ def eval_program(program):
             b = stack.pop()
             a = stack.pop()
             # b is the top of the stack, and a is the item before it, so
-            # doing `push 5 ; div` is division by 5
+            # `... ; push 5 ; div` is dividing the result of `...` by 5.
             if instr.op == 'add':
                 c = a + b
             elif instr.op == 'sub':
@@ -102,12 +102,5 @@ def eval_program(program):
     return stack
 
 
-def get_argument(instuction, default):
-    try:
-        return int(instuction[1])
-    except IndexError:
-        return default
-
-
 def is_operator(op):
-    return op in ['add', 'sub', 'mul', 'div']
+    return op in ('add', 'sub', 'mul', 'div', 'pow')
