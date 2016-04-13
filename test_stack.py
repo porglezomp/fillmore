@@ -104,6 +104,17 @@ def test_dup():
         eval_program("push 1; dup 2")
 
 
+def test_quiet():
+    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
+    assert list(stack.parse_program('div; quiet add')) == expected
+
+    assert eval_program("push 3; push 5; quiet add") == [3, 5, 8]
+    assert eval_program("push 3; push 5; quiet mul") == [3, 5, 15]
+    assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
+    assert eval_program("push 3; push 5; quiet div") == [3, 5, 0.6]
+    assert eval_program("push 3; push 5; quiet pow") == [3, 5, 3**5]
+
+
 def test_jump():
     # It should be possible to jump one past the end of the code, but no more
     assert eval_program("jump 1;") == []
