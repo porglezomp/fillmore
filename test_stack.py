@@ -47,16 +47,16 @@ def test_simple_operators():
     assert eval_program("push 3; push 2; div") == [1.5]
     assert eval_program("push 4; push 4; pow") == [4**4]
     with pytest.raises(IndexError):
-        assert eval_program("push 1; add")
+        eval_program("push 1; add")
     with pytest.raises(IndexError):
-        assert eval_program("sub; push 1")
+        eval_program("sub; push 1")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; pop; mul")
+        eval_program("push 1; push 2; pop; mul")
     with pytest.raises(IndexError):
-        assert eval_program("div")
+        eval_program("div")
     with pytest.raises(ZeroDivisionError):
         # IDEA: division by zero pushes nothing? halts program? pushes zero?
-        assert eval_program("push 1; push 0; div")
+        eval_program("push 1; push 0; div")
 
 
 def test_float_division():
@@ -79,16 +79,16 @@ def test_swap():
     assert eval_program("push 1; push 2; swap") == [2, 1]
     assert eval_program("push 1; push 2; swap 1") == [2, 1]
     assert eval_program("push 1; push 2; push 3; swap") == [1, 3, 2]
-    assert eval_program("push 1; push 2; push 3; push 4; swap 3;") == [
-        4, 2, 3, 1, ]
+    code = "push 1; push 2; push 3; push 4; swap 3;"
+    assert eval_program(code) == [4, 2, 3, 1]
     with pytest.raises(IndexError):
-        assert eval_program("swap")
+        eval_program("swap")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; swap")
+        eval_program("push 1; swap")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; swap 2")
+        eval_program("push 1; push 2; swap 2")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; push 3; swap 3")
+        eval_program("push 1; push 2; push 3; swap 3")
 
 
 def test_dup():
@@ -99,6 +99,6 @@ def test_dup():
     assert eval_program("push 1; dup; push 2; dup 3") == [1, 1, 2, 1, 1, 2]
     with pytest.raises(IndexError):
         # Cannot duplicate the top element, since there is not top element
-        assert eval_program("dup")
+        eval_program("dup")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; dup 2")
+        eval_program("push 1; dup 2")
