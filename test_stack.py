@@ -112,3 +112,12 @@ def test_jump():
     assert eval_program("jump 2; push 1") == []
     assert eval_program("jump 1; push 1") == [1]
     assert eval_program("jump 3; push 9; jump 2; jump -2") == [9]
+
+
+def test_dynamic_jump():
+    # A jump with no argument should jump based on the top of the stack
+    assert eval_program("push 2; jump; push 1") == []
+    assert eval_program("jump 3; push 9; jump 3; push -3; jump") == [9]
+    assert eval_program("push 1; jump") == []
+    with pytest.raises(IndexError):
+        eval_program("push 2; jump")

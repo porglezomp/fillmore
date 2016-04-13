@@ -103,9 +103,13 @@ def eval_program(program):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
         elif instr.op == 'jump':
+            if instr.args:
+                jump_distance = instr.args[0]
+            else:
+                jump_distance = stack.pop()
             # We jump 1 less than the argument since we already incremented it
             # at the beginning of the loop.
-            current_instr += int(instr.args[0]) - 1
+            current_instr += int(jump_distance) - 1
             if current_instr > len(instructions):
                 raise IndexError
     return stack
