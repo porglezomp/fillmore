@@ -14,6 +14,7 @@ class Instr(object):
         '/': 'div', '÷': 'div',
         '^': 'pow',
         '!': 'not', '¬': 'not',
+        '=': 'eq'
     }
 
     def __init__(self, op, args=None, prefix=None):
@@ -78,8 +79,8 @@ def eval_program(program):
         if instr.op == "push":
             stack.append(instr.args[0])
         elif instr.op == "pop":
-            stack.pop()
-        elif is_operator(instr.op):
+            stack.pop() 
+        elif is_binary_operator(instr.op):
             if 'quiet' in instr.prefix:
                 b = stack[-1]
                 a = stack[-2]
@@ -98,6 +99,8 @@ def eval_program(program):
                 c = a / b
             elif instr.op == 'pow':
                 c = a ** b
+            elif instr.op == 'eq':
+                c = int(a == b)
             stack.append(c)
         elif instr.op == 'swap':
             # `swap` aliased to `swap 1`
@@ -115,8 +118,8 @@ def eval_program(program):
     return stack
 
 
-def is_operator(op):
-    return op in ('add', 'sub', 'mul', 'div', 'pow')
+def is_binary_operator(op):
+    return op in ('add', 'sub', 'mul', 'div', 'pow', 'eq')
 
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))

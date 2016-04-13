@@ -98,7 +98,7 @@ def test_dup():
     assert eval_program("push 1; push 2; dup 2") == [1, 2, 1, 2]
     assert eval_program("push 1; dup; push 2; dup 3") == [1, 1, 2, 1, 1, 2]
     with pytest.raises(IndexError):
-        # Cannot duplicate the top element, since there is not top element
+        # Cannot duplicate the top element, since there is no top element
         assert eval_program("dup")
     with pytest.raises(IndexError):
         assert eval_program("push 1; dup 2")
@@ -113,3 +113,14 @@ def test_quiet():
     assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
     assert eval_program("push 3; push 5; quiet div") == [3, 5, 0.6]
     assert eval_program("push 3; push 5; quiet pow") == [3, 5, 3**5]
+def test_equality():
+    assert eval_program("push 0; push 0; eq") == [1]
+    assert eval_program("push 1; push 1; =") == [1]
+    assert eval_program("push -1; push -1; eq") == [1]
+    assert eval_program("push 3; push 5; eq") == [0]
+    assert eval_program("push 4; push 4; quiet eq") == [4, 4, 1]
+    assert eval_program("push 3; push 5; quiet eq") == [3, 5, 0]
+    with pytest.raises(IndexError):
+        assert eval_program("eq")
+    with pytest.raises(IndexError):
+        assert eval_program("push 1; eq")
