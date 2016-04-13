@@ -102,3 +102,13 @@ def test_dup():
         eval_program("dup")
     with pytest.raises(IndexError):
         eval_program("push 1; dup 2")
+
+
+def test_jump():
+    # It should be possible to jump one past the end of the code, but no more
+    assert eval_program("jump 1;") == []
+    with pytest.raises(IndexError):
+        eval_program("jump 2;")
+    assert eval_program("jump 2; push 1") == []
+    assert eval_program("jump 1; push 1") == [1]
+    assert eval_program("jump 3; push 9; jump 2; jump -2") == [9]

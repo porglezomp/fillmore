@@ -63,9 +63,12 @@ def parse_program(code):
 
 
 def eval_program(program):
-    instuctions = parse_program(program)
+    instructions = list(parse_program(program))
     stack = []
-    for instr in instuctions:
+    current_instr = 0
+    while current_instr < len(instructions):
+        instr = instructions[current_instr]
+        current_instr += 1
         if instr.op == "push":
             stack.append(instr.args[0])
         elif instr.op == "pop":
@@ -99,6 +102,12 @@ def eval_program(program):
             if dup_depth > len(stack):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
+        elif instr.op == 'jump':
+            # We jump 1 less than the argument since we already incremented it
+            # at the beginning of the loop.
+            current_instr += int(instr.args[0]) - 1
+            if current_instr > len(instructions):
+                raise IndexError
     return stack
 
 
