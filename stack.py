@@ -57,22 +57,35 @@ def parse_program(code):
         parts = line.strip().split()
         if not parts:
             continue
-        op = parts[0]
-        args = [float(arg) for arg in parts[1:]]
-        yield Instr(op, args)
+        # TODO: This only checks for 'quiet' as a prefix but should allow
+        # "#" and "♯" as equlivlent (move it to Instr.)
+        if parts[0] == 'quiet':
+            prefix = ['quiet']
+            op = parts[1]
+            args = [float(arg) for arg in parts[2:]]
+        else:
+            prefix = None
+            op = parts[0]
+            args = [float(arg) for arg in parts[1:]]
+        yield Instr(op, args, prefix)
 
 
 def eval_program(program):
     instuctions = parse_program(program)
     stack = []
+
     for instr in instuctions:
         if instr.op == "push":
             stack.append(instr.args[0])
         elif instr.op == "pop":
             stack.pop()
         elif is_operator(instr.op):
-            b = stack.pop()
-            a = stack.pop()
+            if 'quiet' in instr.prefix:
+                b = stack[-1]
+                a = stack[-2]
+            else:
+                b = stack.pop()
+                a = stack.pop()
             # b is the top of the stack, and a is the item before it, so
             # `... ; push 5 ; div` is dividing the result of `...` by 5.
             if instr.op == 'add':
@@ -104,3 +117,6 @@ def eval_program(program):
 
 def is_operator(op):
     return op in ('add', 'sub', 'mul', 'div', 'pow')
+
+
+print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
