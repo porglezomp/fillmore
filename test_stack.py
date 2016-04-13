@@ -29,6 +29,13 @@ def test_parse_unicode():
         assert instruction == Instr(Instr.sigil_to_op[sigil])
 
 
+def test_parse_quiet():
+    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
+    assert list(stack.parse_program('div; quiet add')) == expected
+    expected = Instr('jump', prefix=['quiet'])
+    assert next(stack.parse_program('quiet jump')) == expected
+
+
 def test_push_and_pop():
     assert eval_program("push 1; push 2; push 3;") == [1, 2, 3]
     assert eval_program("push 2; pop") == []
@@ -105,9 +112,6 @@ def test_dup():
 
 
 def test_quiet():
-    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
-    assert list(stack.parse_program('div; quiet add')) == expected
-
     assert eval_program("push 3; push 5; quiet add") == [3, 5, 8]
     assert eval_program("push 3; push 5; quiet mul") == [3, 5, 15]
     assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
@@ -130,5 +134,6 @@ def test_dynamic_jump():
     assert eval_program("push 2; jump; push 1") == []
     assert eval_program("jump 3; push 9; jump 3; push -3; jump") == [9]
     assert eval_program("push 1; jump") == []
+    assert eval_program("push 1; quiet jump") == [1]
     with pytest.raises(IndexError):
         eval_program("push 2; jump")

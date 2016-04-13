@@ -118,7 +118,9 @@ def eval_program(program):
             if instr.args:
                 jump_distance = instr.args[0]
             else:
-                jump_distance = stack.pop()
+                jump_distance = stack[-1]
+                if 'quiet' not in instr.prefix:
+                    stack.pop()
             # We jump 1 less than the argument since we already incremented it
             # at the beginning of the loop.
             current_instr += int(jump_distance) - 1
