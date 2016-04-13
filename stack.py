@@ -57,22 +57,30 @@ def parse_program(code):
         parts = line.strip().split()
         if not parts:
             continue
-        op = parts[0]
-        args = [try_float(arg) for arg in parts[1:]]
-        yield Instr(op, args)
+        # TODO: This only checks for 'quiet' as a prefix but should allow
+        # "#" and "♯" as equlivlent (move it to Instr.)
+        if parts[0] == 'quiet':
+            prefix = ['quiet']
+            op = parts[1]
+            args = [float(arg) for arg in parts[2:]]
+        else:
+            prefix = None
+            op = parts[0]
+            args = [float(arg) for arg in parts[1:]]
+        yield Instr(op, args, prefix)
 
 
 def eval_program(program):
     instuctions = parse_program(program)
     stack = []
-    
+
     for instr in instuctions:
         if instr.op == "push":
             stack.append(instr.args[0])
         elif instr.op == "pop":
             stack.pop()
         elif is_operator(instr.op):
-            if 'quiet' in instr.args:
+            if 'quiet' in instr.prefix:
                 b = stack[-1]
                 a = stack[-2]
             else:
@@ -105,20 +113,6 @@ def eval_program(program):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
     return stack
-
-
-def try_float(string):
-    try:
-        return float(string)
-    except ValueError:
-        return string
-
-
-def get_argument(instuction, default):
-    try:
-        return int(instuction[1])
-    except IndexError:
-        return default
 
 
 def is_operator(op):

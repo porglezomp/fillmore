@@ -105,11 +105,11 @@ def test_dup():
 
 
 def test_quiet():
-    expected = [Instr('div', []), Instr('add', ['quiet'])]
-    assert list(stack.parse_program('div; add quiet')) == expected
+    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
+    assert list(stack.parse_program('div; quiet add')) == expected
 
-    assert eval_program("push 3; push 5; add quiet") == [3, 5, 8]
-    assert eval_program("push 3; push 5; mul quiet") == [3, 5, 15]
-    assert eval_program("push 3; push 5; sub quiet") == [3, 5, -2]
-    assert eval_program("push 3; push 5; div quiet") == [3, 5, 0.6]
-    assert eval_program("push 3; push 5; pow quiet") == [3, 5, 3**5]
+    assert eval_program("push 3; push 5; quiet add") == [3, 5, 8]
+    assert eval_program("push 3; push 5; quiet mul") == [3, 5, 15]
+    assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
+    assert eval_program("push 3; push 5; quiet div") == [3, 5, 0.6]
+    assert eval_program("push 3; push 5; quiet pow") == [3, 5, 3**5]
