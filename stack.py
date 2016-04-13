@@ -1,51 +1,104 @@
-# Make Python 2 use float division instead of integer division
+# -*- coding: utf-8 -*-
 from __future__ import division
+import re
 
 
-# TODO: This is pretty stringly typed, perhaps return a custom object?
-def next_instruction(program):
-    split_program = program.split(";")
-    for instuction in split_program:
-        if instuction == "":
-            raise StopIteration
+class Instr(object):
+    sigil_to_op = {
+        '←': 'push', '→': 'pop',
+        '↔': 'swap',
+        '↑': 'jump',
+        '+': 'add',
+        '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
+        '*': 'mul', '×': 'mul',
+        '/': 'div', '÷': 'div',
+        '^': 'pow',
+        '!': 'not', '¬': 'not',
+    }
+
+    def __init__(self, op, args=None, prefix=None):
+        args = [] if args is None else args
+        prefix = [] if prefix is None else prefix
+
+        if op in Instr.sigil_to_op:
+            op = Instr.sigil_to_op[op]
+        self.op, self.args, self.prefix = op, args, prefix
+
+    def __repr__(self):
+        if self.prefix:
+            return 'Instr({!r}, {!r}, {!r})'.format(
+                self.op, self.args, self.prefix)
+        elif self.args:
+            return 'Instr({!r}, {!r})'.format(self.op, self.args)
         else:
-            yield instuction.strip()
+            return 'Instr({!r})'.format(self.op)
+
+    def __eq__(self, other):
+        return (self.op == other.op and
+                self.args == other.args and
+                self.prefix == other.prefix)
+
+
+def parse_program(code):
+    r"""
+    Take a source code string and yield a sequence of instructions
+
+    >>> list(parse_program('push 1'))
+    [Instr('push', [1.0])]
+
+    Various sigils from_ Unicode are supported as alternate versions of
+    operations, for example:
+    >>> list(parse_program('← 1'))
+    [Instr('push', [1.0])]
+    >>> list(parse_program('↔'))
+    [Instr('swap')]
+    """
+    for line in re.split('\n|;', code):
+        parts = line.strip().split()
+        if not parts:
+            continue
+        op = parts[0]
+        args = [try_float(arg) for arg in parts[1:]]
+        yield Instr(op, args)
 
 
 def eval_program(program):
-    instuction_gen = next_instruction(program)
+    instuctions = parse_program(program)
     stack = []
-    for instuction in instuction_gen:
-        instuction = instuction.split()
-        opcode = instuction[0]
-
-        if "quiet" in instuction:
-            is_quiet = True
-        else:
-            is_quiet = False
-
-        if opcode == "push":
-            stack.append(int(instuction[1]))
-        elif opcode == "pop":
+    
+    for instr in instuctions:
+        if instr.op == "push":
+            stack.append(instr.args[0])
+        elif instr.op == "pop":
             stack.pop()
-        elif is_operator(opcode):
-            # This uses the top element as the second operand
-            # because it allows for division and subtraction to be less
-            # irritating (dividing by 5 -> push 5; divide).
-            if is_quiet:
-                second = stack[-1]
-                first = stack[-2]
+        elif is_operator(instr.op):
+            if 'quiet' in instr.args:
+                b = stack[-1]
+                a = stack[-2]
             else:
-                second = stack.pop()
-                first = stack.pop()
-            stack.append(preform_operation(first, second, opcode))
-        elif opcode == "swap":
-            # "swap" aliases to "swap 1"
-            swap_gap = get_argument(instuction, 1)
-            swap_from, swap_to = -1, -(1 + swap_gap)
-            stack[swap_from], stack[swap_to] = stack[swap_to], stack[swap_from]
-        elif opcode == "dup":
-            dup_depth = get_argument(instuction, 1)  # "dup" aliases to "dup 1"
+                b = stack.pop()
+                a = stack.pop()
+            # b is the top of the stack, and a is the item before it, so
+            # `... ; push 5 ; div` is dividing the result of `...` by 5.
+            if instr.op == 'add':
+                c = a + b
+            elif instr.op == 'sub':
+                c = a - b
+            elif instr.op == 'mul':
+                c = a * b
+            elif instr.op == 'div':
+                c = a / b
+            elif instr.op == 'pow':
+                c = a ** b
+            stack.append(c)
+        elif instr.op == 'swap':
+            # `swap` aliased to `swap 1`
+            swap_gap = int(instr.args[0] if instr.args else 1)
+            from_, to = -1, -(1 + swap_gap)
+            stack[from_], stack[to] = stack[to], stack[from_]
+        elif instr.op == 'dup':
+            # `dup` aliases to `dup 1`
+            dup_depth = int(instr.args[0] if instr.args else 1)
             if dup_depth == 0:
                 continue
             if dup_depth > len(stack):
@@ -54,15 +107,11 @@ def eval_program(program):
     return stack
 
 
-def preform_operation(first, second, opcode):
-    if opcode == "add":
-        return first + second
-    elif opcode == "subtract":
-        return first - second
-    elif opcode == "multiply":
-        return first * second
-    elif opcode == "divide":
-        return first / second
+def try_float(string):
+    try:
+        return float(string)
+    except ValueError:
+        return string
 
 
 def get_argument(instuction, default):
@@ -72,11 +121,8 @@ def get_argument(instuction, default):
         return default
 
 
-def is_operator(opcode):
-    if opcode in ["add", "subtract", "multiply", "divide"]:
-        return True
-    else:
-        return False
+def is_operator(op):
+    return op in ('add', 'sub', 'mul', 'div', 'pow')
 
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
