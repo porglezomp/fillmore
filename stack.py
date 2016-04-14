@@ -14,7 +14,11 @@ class Instr(object):
         '/': 'div', '÷': 'div',
         '^': 'pow',
         '!': 'not', '¬': 'not',
-        '=': 'eq'
+        '=': 'eq',
+        '<': 'lt',
+        '>': 'gt',
+        '<=': 'le', '≤': 'le',
+        '>=': 'ge', '≥': 'ge'
     }
 
     def __init__(self, op, args=None, prefix=None):
@@ -101,6 +105,14 @@ def eval_program(program):
                 c = a ** b
             elif instr.op == 'eq':
                 c = int(a == b)
+            elif instr.op == 'lt':
+                c = int(a < b)
+            elif instr.op == 'gt':
+                c = int(a > b)
+            elif instr.op == 'le':
+                c = int(a <= b)
+            elif instr.op == 'ge':
+                c = int(a >= b)
             stack.append(c)
         elif instr.op == 'swap':
             # `swap` aliased to `swap 1`
@@ -124,7 +136,7 @@ def eval_program(program):
 
 
 def is_binary_operator(op):
-    return op in ('add', 'sub', 'mul', 'div', 'pow', 'eq')
+    return op in ('add', 'sub', 'mul', 'div', 'pow', 'eq', 'lt', 'gt', 'le', 'ge')
 
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))

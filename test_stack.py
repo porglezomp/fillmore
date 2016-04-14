@@ -139,3 +139,16 @@ def test_equality():
         assert eval_program("eq")
     with pytest.raises(IndexError):
         assert eval_program("push 1; eq")
+
+def test_inequality():
+    assert eval_program("push 5; push 7; lt") == [1]
+    assert eval_program("push 5; push 7; le") == [1]
+    assert eval_program("push 3; push 3; le") == [1]
+    assert eval_program("push -1; push 0; quiet <") == [-1, 0, 1]
+    assert eval_program("push 5.1; push 5.0; quiet >=") == [5.1, 5.0, 1]
+    assert eval_program("push -3; push 27; <=") == [1]
+    assert eval_program("push 7; push 5; gt") == [1]
+    assert eval_program("push 7; push 5; ge") == [1]
+    assert eval_program("push 3; push 3; ge") == [1]
+    with pytest.raises(IndexError):
+        assert eval_program(">")
