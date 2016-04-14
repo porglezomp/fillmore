@@ -79,7 +79,7 @@ def eval_program(program):
         if instr.op == "push":
             stack.append(instr.args[0])
         elif instr.op == "pop":
-            stack.pop() 
+            stack.pop()
         elif is_binary_operator(instr.op):
             if 'quiet' in instr.prefix:
                 b = stack[-1]
@@ -115,6 +115,11 @@ def eval_program(program):
             if dup_depth > len(stack):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
+        elif instr.op == 'not':
+            if 'quiet' in instr.prefix:
+                stack.append(1 if stack[-1] == 0 else 0)
+            else:
+                stack.append(1 if stack.pop() == 0 else 0)
     return stack
 
 

@@ -113,9 +113,24 @@ def test_quiet():
     assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
     assert eval_program("push 3; push 5; quiet div") == [3, 5, 0.6]
     assert eval_program("push 3; push 5; quiet pow") == [3, 5, 3**5]
+
+
+def test_negation():
+    assert eval_program("push 1; not;") == [0]
+    assert eval_program("push -1; not;") == [0]
+    assert eval_program("push 0; not;") == [1]
+    assert eval_program("push 3; push 7; push 0; not;") == [3, 7, 1]
+    assert eval_program("push 1; quiet not;") == [1, 0]
+    assert eval_program("push 0; quiet not;") == [0, 1]
+    with pytest.raises(IndexError):
+        # Cannot negate top element since there isn't a top element
+        assert eval_program('not')
+
+
 def test_equality():
     assert eval_program("push 0; push 0; eq") == [1]
-    assert eval_program("push 1; push 1; =") == [1]
+    assert eval_program("push 1.0; push 1.0; =") == [1]
+    assert eval_program("push 2.0; push 2; =") == [1]
     assert eval_program("push -1; push -1; eq") == [1]
     assert eval_program("push 3; push 5; eq") == [0]
     assert eval_program("push 4; push 4; quiet eq") == [4, 4, 1]
