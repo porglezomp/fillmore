@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 import stack
@@ -152,3 +153,5 @@ def test_inequality():
     assert eval_program("push 3; push 3; ge") == [1]
     with pytest.raises(IndexError):
         assert eval_program(">")
+    with pytest.raises(IndexError):
+        assert eval_program("push 1; ≤")

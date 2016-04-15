@@ -127,16 +127,20 @@ def eval_program(program):
             if dup_depth > len(stack):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
-        elif instr.op == 'not':
+        elif is_unary_operator(instr.op):
             if 'quiet' in instr.prefix:
-                stack.append(1 if stack[-1] == 0 else 0)
+                operand = stack[-1]
             else:
-                stack.append(1 if stack.pop() == 0 else 0)
+                operand = stack.pop()
+            if instr.op == 'not':
+                stack.append(1 if operand == 0 else 0)
     return stack
 
 
 def is_binary_operator(op):
     return op in ('add', 'sub', 'mul', 'div', 'pow', 'eq', 'lt', 'gt', 'le', 'ge')
 
+def is_unary_operator(op):
+    return op in ('not')
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
