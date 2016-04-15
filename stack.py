@@ -124,7 +124,7 @@ def eval_program(program):
             # We jump 1 less than the argument since we already incremented it
             # at the beginning of the loop.
             current_instr += int(jump_distance) - 1
-            if current_instr > len(instructions):
+            if current_instr > len(instructions) or current_instr < 0:
                 raise IndexError
     return stack
 

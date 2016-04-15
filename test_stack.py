@@ -127,7 +127,11 @@ def test_jump():
     assert eval_program("jump 2; push 1") == []
     assert eval_program("jump 1; push 1") == [1]
     assert eval_program("jump 3; push 9; jump 2; jump -2") == [9]
-
+    # Jumping before the first instruction shouldn't be valid either
+    with pytest.raises(IndexError):
+        eval_program("jump -10")
+    with pytest.raises(IndexError):
+        eval_program("jump -1; jump 0")
 
 def test_dynamic_jump():
     # A jump with no argument should jump based on the top of the stack
@@ -137,3 +141,5 @@ def test_dynamic_jump():
     assert eval_program("push 1; quiet jump") == [1]
     with pytest.raises(IndexError):
         eval_program("push 2; jump")
+    with pytest.raises(IndexError):
+        eval_program("push -2; jump; jump 0")
