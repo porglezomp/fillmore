@@ -93,26 +93,19 @@ def eval_program(program):
                 a = stack.pop()
             # b is the top of the stack, and a is the item before it, so
             # `... ; push 5 ; div` is dividing the result of `...` by 5.
-            if instr.op == 'add':
-                c = a + b
-            elif instr.op == 'sub':
-                c = a - b
-            elif instr.op == 'mul':
-                c = a * b
-            elif instr.op == 'div':
-                c = a / b
-            elif instr.op == 'pow':
-                c = a ** b
-            elif instr.op == 'eq':
-                c = int(a == b)
-            elif instr.op == 'lt':
-                c = int(a < b)
-            elif instr.op == 'gt':
-                c = int(a > b)
-            elif instr.op == 'le':
-                c = int(a <= b)
-            elif instr.op == 'ge':
-                c = int(a >= b)
+            binary_ops = {
+                'add': lambda a, b: b + a,
+                'sub': lambda a, b: b - a,
+                'mul': lambda a, b: b * a,
+                'div': lambda a, b: b / a,
+                'pow': lambda a, b: b ** a,
+                'eq': lambda a, b: int(b == a),
+                'gt': lambda a, b: int(b > a),
+                'ge': lambda a, b: int(b >= a),
+                'lt': lambda a, b: int(b < a),
+                'le': lambda a, b: int(b <= a),
+            }
+            c = binary_ops[instr.op](b, a)
             stack.append(c)
         elif instr.op == 'swap':
             # `swap` aliased to `swap 1`
@@ -138,9 +131,12 @@ def eval_program(program):
 
 
 def is_binary_operator(op):
-    return op in ('add', 'sub', 'mul', 'div', 'pow', 'eq', 'lt', 'gt', 'le', 'ge')
+    return op in ('add', 'sub', 'mul', 'div', 'pow',
+                  'eq',  'lt',  'gt',  'le',  'ge')
+
 
 def is_unary_operator(op):
     return op in ('not')
+
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))

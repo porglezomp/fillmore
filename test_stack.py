@@ -141,6 +141,7 @@ def test_equality():
     with pytest.raises(IndexError):
         assert eval_program("push 1; eq")
 
+
 def test_inequality():
     assert eval_program("push 5; push 7; lt") == [1]
     assert eval_program("push 5; push 7; le") == [1]
