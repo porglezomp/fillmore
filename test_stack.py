@@ -121,7 +121,7 @@ def test_negation():
     assert eval_program("push -1; not;") == [0]
     assert eval_program("push 0; not;") == [1]
     assert eval_program("push 3; push 7; push 0; not;") == [3, 7, 1]
-    assert eval_program("push 1; quiet not;") == [1, 0]
+    assert eval_program("push 5; quiet not;") == [5, 0]
     assert eval_program("push 0; quiet not;") == [0, 1]
     with pytest.raises(IndexError):
         # Cannot negate top element since there isn't a top element
@@ -156,3 +156,8 @@ def test_inequality():
         assert eval_program(">")
     with pytest.raises(IndexError):
         assert eval_program("push 1; ≤")
+
+def test_float_comparision():
+    assert eval_program("push 3; push 3; eq;") == [1.0]
+    assert eval_program("push 3; push 2; ge; push 2.5; mul;") == [2.5]
+    assert eval_program("push 1; push 1; eq; dup; quiet add; div") == [1.0, 0.5]
