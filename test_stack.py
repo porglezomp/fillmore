@@ -30,6 +30,13 @@ def test_parse_unicode():
         assert instruction == Instr(Instr.sigil_to_op[sigil])
 
 
+def test_parse_quiet():
+    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
+    assert list(stack.parse_program('div; quiet add')) == expected
+    expected = Instr('jump', prefix=['quiet'])
+    assert next(stack.parse_program('quiet jump')) == expected
+
+
 def test_push_and_pop():
     assert eval_program("push 1; push 2; push 3;") == [1, 2, 3]
     assert eval_program("push 2; pop") == []
@@ -48,16 +55,16 @@ def test_simple_operators():
     assert eval_program("push 3; push 2; div") == [1.5]
     assert eval_program("push 4; push 4; pow") == [4**4]
     with pytest.raises(IndexError):
-        assert eval_program("push 1; add")
+        eval_program("push 1; add")
     with pytest.raises(IndexError):
-        assert eval_program("sub; push 1")
+        eval_program("sub; push 1")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; pop; mul")
+        eval_program("push 1; push 2; pop; mul")
     with pytest.raises(IndexError):
-        assert eval_program("div")
+        eval_program("div")
     with pytest.raises(ZeroDivisionError):
         # IDEA: division by zero pushes nothing? halts program? pushes zero?
-        assert eval_program("push 1; push 0; div")
+        eval_program("push 1; push 0; div")
 
 
 def test_float_division():
@@ -80,16 +87,16 @@ def test_swap():
     assert eval_program("push 1; push 2; swap") == [2, 1]
     assert eval_program("push 1; push 2; swap 1") == [2, 1]
     assert eval_program("push 1; push 2; push 3; swap") == [1, 3, 2]
-    assert eval_program("push 1; push 2; push 3; push 4; swap 3;") == [
-        4, 2, 3, 1, ]
+    code = "push 1; push 2; push 3; push 4; swap 3;"
+    assert eval_program(code) == [4, 2, 3, 1]
     with pytest.raises(IndexError):
-        assert eval_program("swap")
+        eval_program("swap")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; swap")
+        eval_program("push 1; swap")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; swap 2")
+        eval_program("push 1; push 2; swap 2")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; push 2; push 3; swap 3")
+        eval_program("push 1; push 2; push 3; swap 3")
 
 
 def test_dup():
@@ -100,15 +107,12 @@ def test_dup():
     assert eval_program("push 1; dup; push 2; dup 3") == [1, 1, 2, 1, 1, 2]
     with pytest.raises(IndexError):
         # Cannot duplicate the top element, since there is no top element
-        assert eval_program("dup")
+        eval_program("dup")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; dup 2")
+        eval_program("push 1; dup 2")
 
 
 def test_quiet():
-    expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
-    assert list(stack.parse_program('div; quiet add')) == expected
-
     assert eval_program("push 3; push 5; quiet add") == [3, 5, 8]
     assert eval_program("push 3; push 5; quiet mul") == [3, 5, 15]
     assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
@@ -160,4 +164,30 @@ def test_inequality():
 def test_float_comparision():
     assert eval_program("push 3; push 3; eq;") == [1.0]
     assert eval_program("push 3; push 2; ge; push 2.5; mul;") == [2.5]
-    assert eval_program("push 1; push 1; eq; dup; quiet add; div") == [1.0, 0.5]
+    assert eval_program("push 1; push 1; eq; dup; quiet +; ÷") == [1.0, 0.5]
+
+
+def test_jump():
+    # It should be possible to jump one past the end of the code, but no more
+    assert eval_program("jump 1;") == []
+    with pytest.raises(IndexError):
+        eval_program("jump 2;")
+    assert eval_program("jump 2; push 1") == []
+    assert eval_program("jump 1; push 1") == [1]
+    assert eval_program("jump 3; push 9; jump 2; jump -2") == [9]
+    # Jumping before the first instruction shouldn't be valid either
+    with pytest.raises(IndexError):
+        eval_program("jump -10")
+    with pytest.raises(IndexError):
+        eval_program("jump -1; jump 0")
+
+def test_dynamic_jump():
+    # A jump with no argument should jump based on the top of the stack
+    assert eval_program("push 2; jump; push 1") == []
+    assert eval_program("jump 3; push 9; jump 3; push -3; jump") == [9]
+    assert eval_program("push 1; jump") == []
+    assert eval_program("push 1; quiet jump") == [1]
+    with pytest.raises(IndexError):
+        eval_program("push 2; jump")
+    with pytest.raises(IndexError):
+        eval_program("push -2; jump; jump 0")
