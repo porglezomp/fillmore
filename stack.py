@@ -14,6 +14,11 @@ class Instr(object):
         '/': 'div', '÷': 'div',
         '^': 'pow',
         '!': 'not', '¬': 'not',
+        '=': 'eq',
+        '<': 'lt',
+        '>': 'gt',
+        '<=': 'le', '≤': 'le',
+        '>=': 'ge', '≥': 'ge'
     }
 
     def __init__(self, op, args=None, prefix=None):
@@ -81,7 +86,7 @@ def eval_program(program):
             stack.append(instr.args[0])
         elif instr.op == "pop":
             stack.pop()
-        elif is_operator(instr.op):
+        elif instr.op in binary_ops:
             if 'quiet' in instr.prefix:
                 b = stack[-1]
                 a = stack[-2]
@@ -90,16 +95,8 @@ def eval_program(program):
                 a = stack.pop()
             # b is the top of the stack, and a is the item before it, so
             # `... ; push 5 ; div` is dividing the result of `...` by 5.
-            if instr.op == 'add':
-                c = a + b
-            elif instr.op == 'sub':
-                c = a - b
-            elif instr.op == 'mul':
-                c = a * b
-            elif instr.op == 'div':
-                c = a / b
-            elif instr.op == 'pow':
-                c = a ** b
+
+            c = binary_ops[instr.op](b, a)
             stack.append(c)
         elif instr.op == 'swap':
             # `swap` aliased to `swap 1`
@@ -114,6 +111,13 @@ def eval_program(program):
             if dup_depth > len(stack):
                 raise IndexError
             stack.extend(stack[-dup_depth:])
+        elif instr.op in unary_ops:
+            if 'quiet' in instr.prefix:
+                operand = stack[-1]
+            else:
+                operand = stack.pop()
+            c = unary_ops[instr.op](operand)
+            stack.append(c)
         elif instr.op == 'jump':
             if instr.args:
                 jump_distance = instr.args[0]
@@ -129,8 +133,23 @@ def eval_program(program):
     return stack
 
 
-def is_operator(op):
-    return op in ('add', 'sub', 'mul', 'div', 'pow')
+binary_ops = {
+    'add': lambda a, b: b + a,
+    'sub': lambda a, b: b - a,
+    'mul': lambda a, b: b * a,
+    'div': lambda a, b: b / a,
+    'pow': lambda a, b: b ** a,
+    'eq': lambda a, b: float(b == a),
+    'gt': lambda a, b: float(b > a),
+    'ge': lambda a, b: float(b >= a),
+    'lt': lambda a, b: float(b < a),
+    'le': lambda a, b: float(b <= a)
+}
+
+
+unary_ops = {
+    'not': lambda a: float(not a)
+}
 
 
 print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))

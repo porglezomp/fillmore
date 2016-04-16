@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 import stack
@@ -105,7 +106,7 @@ def test_dup():
     assert eval_program("push 1; push 2; dup 2") == [1, 2, 1, 2]
     assert eval_program("push 1; dup; push 2; dup 3") == [1, 1, 2, 1, 1, 2]
     with pytest.raises(IndexError):
-        # Cannot duplicate the top element, since there is not top element
+        # Cannot duplicate the top element, since there is no top element
         eval_program("dup")
     with pytest.raises(IndexError):
         eval_program("push 1; dup 2")
@@ -117,6 +118,53 @@ def test_quiet():
     assert eval_program("push 3; push 5; quiet sub") == [3, 5, -2]
     assert eval_program("push 3; push 5; quiet div") == [3, 5, 0.6]
     assert eval_program("push 3; push 5; quiet pow") == [3, 5, 3**5]
+
+
+def test_negation():
+    assert eval_program("push 1; not;") == [0]
+    assert eval_program("push -1; not;") == [0]
+    assert eval_program("push 0; not;") == [1]
+    assert eval_program("push 3; push 7; push 0; not;") == [3, 7, 1]
+    assert eval_program("push 5; quiet not;") == [5, 0]
+    assert eval_program("push 0; quiet not;") == [0, 1]
+    with pytest.raises(IndexError):
+        # Cannot negate top element since there isn't a top element
+        assert eval_program('not')
+
+
+def test_equality():
+    assert eval_program("push 0; push 0; eq") == [1]
+    assert eval_program("push 1.0; push 1.0; =") == [1]
+    assert eval_program("push 2.0; push 2; =") == [1]
+    assert eval_program("push -1; push -1; eq") == [1]
+    assert eval_program("push 3; push 5; eq") == [0]
+    assert eval_program("push 4; push 4; quiet eq") == [4, 4, 1]
+    assert eval_program("push 3; push 5; quiet eq") == [3, 5, 0]
+    with pytest.raises(IndexError):
+        assert eval_program("eq")
+    with pytest.raises(IndexError):
+        assert eval_program("push 1; eq")
+
+
+def test_inequality():
+    assert eval_program("push 5; push 7; lt") == [1]
+    assert eval_program("push 5; push 7; le") == [1]
+    assert eval_program("push 3; push 3; le") == [1]
+    assert eval_program("push -1; push 0; quiet <") == [-1, 0, 1]
+    assert eval_program("push 5.1; push 5.0; quiet >=") == [5.1, 5.0, 1]
+    assert eval_program("push -3; push 27; <=") == [1]
+    assert eval_program("push 7; push 5; gt") == [1]
+    assert eval_program("push 7; push 5; ge") == [1]
+    assert eval_program("push 3; push 3; ge") == [1]
+    with pytest.raises(IndexError):
+        assert eval_program(">")
+    with pytest.raises(IndexError):
+        assert eval_program("push 1; ≤")
+
+def test_float_comparision():
+    assert eval_program("push 3; push 3; eq;") == [1.0]
+    assert eval_program("push 3; push 2; ge; push 2.5; mul;") == [2.5]
+    assert eval_program("push 1; push 1; eq; dup; quiet +; ÷") == [1.0, 0.5]
 
 
 def test_jump():
