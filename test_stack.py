@@ -7,11 +7,6 @@ from stack import eval_program, Instr
 import pytest
 
 
-def test_unicode_sigil():
-    for sigil in Instr.sigil_to_op:
-        assert Instr(sigil) == Instr(Instr.sigil_to_op[sigil])
-
-
 def test_parse():
     expected = [Instr('push', [1]), Instr('pop'), Instr('swap')]
     # Any mix of semicolons and newlines should work
@@ -22,12 +17,14 @@ def test_parse():
     assert list(stack.parse_program('push 1 ;pop;  swap')) == expected
     # And empty instructions should be skipped
     assert list(stack.parse_program('push 1 ;;; pop\n;\nswap')) == expected
+    with pytest.raises(ValueError):
+        list(stack.parse_program('horp; push 0'))
 
 
 def test_parse_unicode():
-    for sigil in Instr.sigil_to_op:
+    for sigil in stack.sigil_to_op:
         instruction = next(stack.parse_program(sigil))
-        assert instruction == Instr(Instr.sigil_to_op[sigil])
+        assert instruction == Instr(stack.sigil_to_op[sigil])
 
 
 def test_parse_quiet():
@@ -129,7 +126,7 @@ def test_negation():
     assert eval_program("push 0; quiet not;") == [0, 1]
     with pytest.raises(IndexError):
         # Cannot negate top element since there isn't a top element
-        assert eval_program('not')
+        eval_program('not')
 
 
 def test_equality():
@@ -141,9 +138,9 @@ def test_equality():
     assert eval_program("push 4; push 4; quiet eq") == [4, 4, 1]
     assert eval_program("push 3; push 5; quiet eq") == [3, 5, 0]
     with pytest.raises(IndexError):
-        assert eval_program("eq")
+        eval_program("eq")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; eq")
+        eval_program("push 1; eq")
 
 
 def test_inequality():
@@ -157,9 +154,9 @@ def test_inequality():
     assert eval_program("push 7; push 5; ge") == [1]
     assert eval_program("push 3; push 3; ge") == [1]
     with pytest.raises(IndexError):
-        assert eval_program(">")
+        eval_program(">")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; ≤")
+        eval_program("push 1; ≤")
 
 def test_float_comparision():
     assert eval_program("push 3; push 3; eq;") == [1.0]
