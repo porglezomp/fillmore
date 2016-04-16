@@ -48,6 +48,15 @@ valid_ops = [
     'not'
 ]
 
+arg_types = {
+    'push': [[float]],
+    'pop': [[]],
+    'dup': [[], [int]], 'swap': [[], [int]], 'jump': [[], [int]],
+    'add': [[]], 'sub': [[]], 'mul': [[]], 'div': [[]], 'pow': [[]],
+    'eq': [[]], 'lt': [[]], 'gt': [[]], 'le': [[]], 'ge': [[]],
+    'not': [[]],
+}
+
 
 def parse_program(code):
     r"""
@@ -81,6 +90,23 @@ def parse_program(code):
             op = sigil_to_op[op]
         if op not in valid_ops:
             raise ValueError("Unknown opcode '{}'".format(op))
+
+        check_type = {
+            int: lambda x: int(x) == x,
+            float: lambda x: isinstance(x, float),
+        }
+        arg_type_list = arg_types[op]
+        typechecked = False
+        for types in arg_type_list:
+            if len(types) != len(args):
+                continue
+            if all(check_type[t](arg) for t, arg in zip(types, args)):
+                typechecked = True
+                break
+        if not typechecked:
+            raise ValueError(
+                "Arguments for '{}' must be one of {}, were {}".format(
+                    op, ', '.join(str(item) for item in arg_type_list), args))
         yield Instr(op, args, prefix)
 
 

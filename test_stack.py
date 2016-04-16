@@ -21,10 +21,10 @@ def test_parse():
         list(stack.parse_program('horp; push 0'))
 
 
-def test_parse_unicode():
-    for sigil in stack.sigil_to_op:
-        instruction = next(stack.parse_program(sigil))
-        assert instruction == Instr(stack.sigil_to_op[sigil])
+# def test_parse_unicode():
+#     for sigil in stack.sigil_to_op:
+#         instruction = next(stack.parse_program(sigil))
+#         assert instruction == Instr(stack.sigil_to_op[sigil])
 
 
 def test_parse_quiet():
@@ -32,6 +32,27 @@ def test_parse_quiet():
     assert list(stack.parse_program('div; quiet add')) == expected
     expected = Instr('jump', prefix=['quiet'])
     assert next(stack.parse_program('quiet jump')) == expected
+
+
+def test_argument_errors():
+    with pytest.raises(ValueError):
+        list(stack.parse_program('push'))
+
+    int_arg = ['jump', 'dup', 'swap']
+    for op in int_arg:
+        with pytest.raises(ValueError):
+            list(stack.parse_program(op + ' 0.5'))
+
+    no_arg = ['pop', 'add', 'sub', 'mul', 'div', 'pow', 'eq',
+              'lt', 'gt', 'le', 'ge', 'not']
+    for op in no_arg:
+        with pytest.raises(ValueError):
+            list(stack.parse_program(op + ' 1'))
+
+    one_arg = ['dup', 'swap', 'jump']
+    for op in no_arg + one_arg:
+        with pytest.raises(ValueError):
+            list(stack.parse_program(op + ' 1 1'))
 
 
 def test_push_and_pop():
