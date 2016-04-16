@@ -35,6 +35,9 @@ def test_parse_quiet():
     assert list(stack.parse_program('div; quiet add')) == expected
     expected = Instr('jump', prefix=['quiet'])
     assert next(stack.parse_program('quiet jump')) == expected
+    for quiet in ["#", "♯", "quiet"]:
+        expected = [Instr('jump', prefix=['quiet'])]
+        assert list(stack.parse_program(quiet + ' jump')) == expected
 
 
 def test_push_and_pop():

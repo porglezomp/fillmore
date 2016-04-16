@@ -57,6 +57,12 @@ def parse_program(code):
     [Instr('push', [1.0])]
     >>> list(parse_program('↔'))
     [Instr('swap')]
+
+    Prefixes are placed before the instruction
+    Some prefixes also have sigils
+    >>> list(parse_program('♯ +'))
+    [Instr('add', [], ['quiet'])]
+
     """
     for line in re.split('\n|;', code):
         parts = line.strip().split()
@@ -64,16 +70,23 @@ def parse_program(code):
             continue
         # TODO: This only checks for 'quiet' as a prefix but should allow
         # "#" and "♯" as equlivlent (move it to Instr.)
-        if parts[0] == 'quiet':
-            prefix = ['quiet']
-            op = parts[1]
-            args = [float(arg) for arg in parts[2:]]
-        else:
-            prefix = None
-            op = parts[0]
-            args = [float(arg) for arg in parts[1:]]
+        prefix = []
+        args = []
+        for part in parts:
+            if part in prefixes:
+                prefix.append(prefixes[part])
+            try:
+                args.append(float(part))
+            except ValueError:
+                op = part
         yield Instr(op, args, prefix)
 
+
+prefixes = {
+    'quiet': 'quiet',
+    '#': 'quiet',
+    '♯': 'quiet'
+}
 
 def eval_program(program):
     instructions = list(parse_program(program))
