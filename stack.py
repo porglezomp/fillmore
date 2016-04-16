@@ -118,7 +118,8 @@ def eval_program(program):
             if dup_depth == 0:
                 continue
             if dup_depth > len(stack):
-                raise IndexError
+                raise IndexError("Cannot dup {} elements, stack has {}".format(
+                    dup_depth, len(stack)))
             stack.extend(stack[-dup_depth:])
         elif instr.op in unary_ops:
             if 'quiet' in instr.prefix:
@@ -138,7 +139,8 @@ def eval_program(program):
             # at the beginning of the loop.
             current_instr += int(jump_distance) - 1
             if current_instr > len(instructions) or current_instr < 0:
-                raise IndexError
+                raise IndexError("Jump address {} out of bounds ({})".format(
+                    current_instr, len(instructions)-1))
     return stack
 
 
