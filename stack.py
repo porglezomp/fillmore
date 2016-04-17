@@ -183,7 +183,26 @@ def eval_program(program):
             current_instr += int(jump_distance) - 1
             if current_instr > len(instructions) or current_instr < 0:
                 raise IndexError
+        elif instr.op == 'to':
+            if instr.args:
+                jump_to = instr.args[0]
+            else:
+                jump_to = stack[-1]
+                if 'quiet' not in instr.prefix:
+                    stack.pop()
+            if not float.is_integer(jump_to):
+                raise TypeError("Expected an integer, got a: " + jump_to)
+            # Still jump 1 less than argument.
+            current_instr = int(jump_to) - 1
+            if current_instr >= len(instructions) or current_instr <= 0:
+                raise IndexError
     return stack
+
+
+jump_ops = {
+    'jump',
+    'to',
+}
 
 
 binary_ops = {
