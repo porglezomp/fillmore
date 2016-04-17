@@ -170,6 +170,7 @@ def test_float_comparision():
     assert eval_program("push 1; push 1; eq; dup; quiet +; ÷") == [1.0, 0.5]
 
 
+@pytest.mark.timeout(1)
 def test_jump():
     # It should be possible to jump one past the end of the code, but no more
     assert eval_program("jump 1;") == []
@@ -184,6 +185,7 @@ def test_jump():
     with pytest.raises(IndexError):
         eval_program("jump -1; jump 0")
 
+@pytest.mark.timeout(1)
 def test_dynamic_jump():
     # A jump with no argument should jump based on the top of the stack
     assert eval_program("push 2; jump; push 1") == []
@@ -194,3 +196,46 @@ def test_dynamic_jump():
         eval_program("push 2; jump")
     with pytest.raises(IndexError):
         eval_program("push -2; jump; jump 0")
+
+@pytest.mark.timeout(1)
+def test_jump_labels():
+    # A jump label should be converted into relative jumps at parse time.
+    expected = [Instr('push', [1]), Instr('push', [2]), Instr('jump', [-2])]
+    program = "@start\npush 1; push 2; jump @start"
+    assert list(stack.parse_program(program)) == expected
+
+    # Multiple jump labels should work.
+
+@pytest.mark.timeout(1)
+def test_fibonacci():
+    # Has the nth fibonacci term at the top of the stack
+    # TODO: test against different fibonacci inputs.
+    # (0 = 0th term)
+    program = """
+    push 1
+    push 0
+    push 6
+    @setup
+    swap 2
+    @next_fib
+    dup
+    swap 2
+    add
+    @decement_n
+    swap 2
+    push -1
+    add
+    @check_for_zero
+    quiet not
+    push 1
+    add
+    jump
+    jump @setup
+    jump @end
+    @end
+    swap 2
+    pop
+    swap
+    pop
+    """
+    assert eval_program(program) == [8]

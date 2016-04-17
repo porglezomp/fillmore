@@ -62,24 +62,49 @@ def parse_program(code):
     Some prefixes also have sigils
     >>> list(parse_program('♯ +'))
     [Instr('add', [], ['quiet'])]
-
     """
-    for line in re.split('\n|;', code):
+    split_program = re.split('\n|;', code)
+    label_indexes = get_label_indexes(split_program);
+    # Represents ONLY instruction indexes
+    # Used to map labels and index numbers.
+    current_index = 0
+
+    # TODO: Refactor into own function.
+
+    current_index = 0
+    for line in split_program:
+        # TODO: Disallow `@label add 1`, `add @label 1`, etc
+        # `@label; add 1` is ok though.
         parts = line.strip().split()
-        if not parts:
+        # Ignore newlines 
+        if not parts or is_label(parts[0]):
             continue
-        # TODO: This only checks for 'quiet' as a prefix but should allow
-        # "#" and "♯" as equlivlent (move it to Instr.)
-        prefix = []
-        args = []
-        for part in parts:
-            if part in prefixes:
-                prefix.append(prefixes[part])
-            try:
-                args.append(float(part))
-            except ValueError:
-                op = part
-        yield Instr(op, args, prefix)
+        # Process an actual instruction
+        else:
+            prefix = []
+            args = []
+            for part in parts:
+                if part in prefixes:
+                    prefix.append(prefixes[part])
+                # We convert labels to their relative jump form
+                # TODO: This also converts labels on their own line
+                # Ex: @label_here == 2
+                # Which might be bad?
+                elif is_label(part):
+                    # TODO: This would be much easier with a `to`
+                    args.append(label_indexes[part] - current_index)
+                # Not a label or a prefix.
+                else:
+                    # Test if argument
+                    try:
+                        args.append(float(part))
+                    except ValueError:
+                        op = part
+            current_index += 1
+            yield Instr(op, args, prefix)
+
+def is_label(label):
+    return True if label[0] == "@" else False
 
 
 prefixes = {
@@ -87,6 +112,21 @@ prefixes = {
     '#': 'quiet',
     '♯': 'quiet'
 }
+
+
+def get_label_indexes(split_program):
+    label_indexes = {}
+    current_index = 0
+    for line in split_program:
+        parts = line.strip().split()
+        if not parts:
+            continue
+        if is_label(parts[0]):
+            label_indexes[parts[0]] = current_index
+            continue
+        current_index += 1
+    return label_indexes
+
 
 def eval_program(program):
     instructions = list(parse_program(program))
@@ -165,4 +205,4 @@ unary_ops = {
 }
 
 
-print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
+print(eval_program("push 1; push 2; add; push 5; mul; push 3; div"))
