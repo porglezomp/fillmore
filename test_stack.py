@@ -201,7 +201,7 @@ def test_dynamic_jump():
 @pytest.mark.timeout(1)
 def test_jump_labels():
     # A jump label should be converted into relative jumps at parse time.
-    expected = [Instr('push', [1]), Instr('push', [2]), Instr('jump', [-2])]
+    expected = [Instr('push', [1]), Instr('push', [2]), Instr('to', [1])]
     program = "@start\npush 1; push 2; jump @start"
     assert list(stack.parse_program(program)) == expected
 
@@ -237,11 +237,10 @@ def test_fibonacci():
     swap 2
     pop
     swap
-    pop
-    """
+    pop"""
     assert eval_program(program) == [8]
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(1)
 def test_absolute_jump():
     # An absolute jump will jump to the instruction number
     # reguardless of where the jump is placed. Instructions start at 0.
@@ -251,7 +250,7 @@ def test_absolute_jump():
     assert eval_program("push 3; to; push 5; push 6") == [5, 6]
     assert eval_program("push 3; quiet to; push 5; push 6") == [3, 5, 6]
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(1)
 def test_illegal_jump():
     # Attempting to jump before the start
     # or after the end of a program is an error.

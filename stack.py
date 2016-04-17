@@ -91,8 +91,10 @@ def parse_program(code):
                 # Ex: @label_here == 2
                 # Which might be bad?
                 elif is_label(part):
-                    # TODO: This would be much easier with a `to`
-                    args.append(label_indexes[part] - current_index)
+                    op = 'to'
+                    # Increment the index by one because we
+                    # jump to the instruction right after the label
+                    args.append(float(label_indexes[part]) + 1)
                 # Not a label or a prefix.
                 else:
                     # Test if argument
@@ -192,10 +194,11 @@ def eval_program(program):
                     stack.pop()
             if not float.is_integer(jump_to):
                 raise TypeError("Expected an integer, got a: " + jump_to)
-            # Still jump 1 less than argument.
+            # Jump one less because we already incremented it
             current_instr = int(jump_to) - 1
             if current_instr >= len(instructions) or current_instr <= 0:
                 raise IndexError
+        print(stack, instr)
     return stack
 
 
