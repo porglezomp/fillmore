@@ -114,6 +114,7 @@ def test_swap():
     with pytest.raises(IndexError):
         eval_program("push 1; push 2; swap 2")
     with pytest.raises(IndexError):
+
         eval_program("push 1; push 2; push 3; swap 3")
 
 
@@ -209,3 +210,8 @@ def test_dynamic_jump():
         eval_program("push 2; jump")
     with pytest.raises(IndexError):
         eval_program("push -2; jump; jump 0")
+
+
+def test_nop():
+    assert eval_program("nop") == []
+    assert eval_program("∅") == []
