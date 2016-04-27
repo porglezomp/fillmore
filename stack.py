@@ -106,7 +106,7 @@ def parse_program(code):
             yield Instr(op, args, prefix)
 
 def is_label(label):
-    return True if label[0] == "@" else False
+    return label[0] == '@'
 
 
 prefixes = {

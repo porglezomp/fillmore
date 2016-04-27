@@ -132,7 +132,7 @@ def test_negation():
     assert eval_program("push 0; quiet not;") == [0, 1]
     with pytest.raises(IndexError):
         # Cannot negate top element since there isn't a top element
-        assert eval_program('not')
+        eval_program('not')
 
 
 def test_equality():
@@ -144,9 +144,9 @@ def test_equality():
     assert eval_program("push 4; push 4; quiet eq") == [4, 4, 1]
     assert eval_program("push 3; push 5; quiet eq") == [3, 5, 0]
     with pytest.raises(IndexError):
-        assert eval_program("eq")
+        eval_program("eq")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; eq")
+        eval_program("push 1; eq")
 
 
 def test_inequality():
@@ -160,9 +160,9 @@ def test_inequality():
     assert eval_program("push 7; push 5; ge") == [1]
     assert eval_program("push 3; push 3; ge") == [1]
     with pytest.raises(IndexError):
-        assert eval_program(">")
+        eval_program(">")
     with pytest.raises(IndexError):
-        assert eval_program("push 1; ≤")
+        eval_program("push 1; ≤")
 
 def test_float_comparision():
     assert eval_program("push 3; push 3; eq;") == [1.0]
@@ -244,7 +244,7 @@ def test_fibonacci():
 def test_absolute_jump():
     # An absolute jump will jump to the instruction number
     # reguardless of where the jump is placed. Instructions start at 0.
-    eval_program('to 3; push 2; push 3; push 4') == [3, 4]
+    assert eval_program('to 3; push 2; push 3; push 4') == [3, 4]
     # If no argument is specified, pop the top element.
     # If quiet is specified, don't discard the top element.
     assert eval_program("push 3; to; push 5; push 6") == [5, 6]
@@ -259,7 +259,7 @@ def test_illegal_jump():
     with pytest.raises(IndexError):
         eval_program('to 4; push 1')
     # Whole number floats should be jumpable,
-    eval_program("push 15; push 3; div; quiet to; push 1; push 2") == [4.0, 1, 2]
+    assert eval_program("push 15; push 3; div; quiet to; push 1; push 2") == [5, 1, 2]
     # but shouldn't be able to jump to floats,
     with pytest.raises(TypeError):
         eval_program('push 4; push 5; div; to')
