@@ -68,10 +68,6 @@ def parse_program(code):
     # Represents ONLY instruction indexes
     # Used to map labels and index numbers.
     current_index = 0
-
-    # TODO: Refactor into own function.
-
-    current_index = 0
     for line in split_program:
         # TODO: Disallow `@label add 1`, `add @label 1`, etc
         # `@label; add 1` is ok though.
@@ -81,6 +77,7 @@ def parse_program(code):
             continue
         # Process an actual instruction
         else:
+            current_index += 1
             prefix = []
             args = []
             for part in parts:
@@ -94,7 +91,7 @@ def parse_program(code):
                     op = 'to'
                     # Increment the index by one because we
                     # jump to the instruction right after the label
-                    args.append(float(label_indexes[part]) + 1)
+                    args.append(float(label_indexes[part]))
                 # Not a label or a prefix.
                 else:
                     # Test if argument
@@ -102,7 +99,6 @@ def parse_program(code):
                         args.append(float(part))
                     except ValueError:
                         op = part
-            current_index += 1
             yield Instr(op, args, prefix)
 
 def is_label(label):
@@ -194,11 +190,9 @@ def eval_program(program):
                     stack.pop()
             if not float.is_integer(jump_to):
                 raise TypeError("Expected an integer, got a: " + jump_to)
-            # Jump one less because we already incremented it
-            current_instr = int(jump_to) - 1
+            current_instr = int(jump_to)
             if current_instr >= len(instructions) or current_instr <= 0:
                 raise IndexError
-        print(stack, instr)
     return stack
 
 

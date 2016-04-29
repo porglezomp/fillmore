@@ -201,7 +201,7 @@ def test_dynamic_jump():
 @pytest.mark.timeout(1)
 def test_jump_labels():
     # A jump label should be converted into relative jumps at parse time.
-    expected = [Instr('push', [1]), Instr('push', [2]), Instr('to', [1])]
+    expected = [Instr('push', [1]), Instr('push', [2]), Instr('to', [0])]
     program = "@start\npush 1; push 2; jump @start"
     assert list(stack.parse_program(program)) == expected
 
@@ -244,11 +244,11 @@ def test_fibonacci():
 def test_absolute_jump():
     # An absolute jump will jump to the instruction number
     # reguardless of where the jump is placed. Instructions start at 0.
-    assert eval_program('to 3; push 2; push 3; push 4') == [3, 4]
+    assert eval_program('to 2; push 2; push 3; push 4') == [3, 4]
     # If no argument is specified, pop the top element.
     # If quiet is specified, don't discard the top element.
-    assert eval_program("push 3; to; push 5; push 6") == [5, 6]
-    assert eval_program("push 3; quiet to; push 5; push 6") == [3, 5, 6]
+    assert eval_program("push 2; to; push 5; push 6") == [5, 6]
+    assert eval_program("push 2; quiet to; push 5; push 6") == [2, 5, 6]
 
 @pytest.mark.timeout(1)
 def test_illegal_jump():
@@ -259,7 +259,7 @@ def test_illegal_jump():
     with pytest.raises(IndexError):
         eval_program('to 4; push 1')
     # Whole number floats should be jumpable,
-    assert eval_program("push 15; push 3; div; quiet to; push 1; push 2") == [5, 1, 2]
+    assert eval_program("push 12; push 3; div; quiet to; push 1; push 2") == [4.0, 1, 2]
     # but shouldn't be able to jump to floats,
     with pytest.raises(TypeError):
         eval_program('push 4; push 5; div; to')
