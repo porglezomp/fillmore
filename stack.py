@@ -4,29 +4,9 @@ import re
 
 
 class Instr(object):
-    sigil_to_op = {
-        '←': 'push', '→': 'pop',
-        '↔': 'swap',
-        '↑': 'jump',
-        '+': 'add',
-        '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
-        '*': 'mul', '×': 'mul',
-        '/': 'div', '÷': 'div',
-        '^': 'pow',
-        '!': 'not', '¬': 'not',
-        '=': 'eq',
-        '<': 'lt',
-        '>': 'gt',
-        '<=': 'le', '≤': 'le',
-        '>=': 'ge', '≥': 'ge'
-    }
-
     def __init__(self, op, args=None, prefix=None):
         args = [] if args is None else args
         prefix = [] if prefix is None else prefix
-
-        if op in Instr.sigil_to_op:
-            op = Instr.sigil_to_op[op]
         self.op, self.args, self.prefix = op, args, prefix
 
     def __repr__(self):
@@ -44,18 +24,52 @@ class Instr(object):
                 self.prefix == other.prefix)
 
 
+sigil_to_op = {
+    '←': 'push', '→': 'pop',
+    '↔': 'swap',
+    '↑': 'jump',
+    '+': 'add',
+    '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
+    '*': 'mul', '×': 'mul',
+    '/': 'div', '÷': 'div',
+    '^': 'pow',
+    '!': 'not', '¬': 'not',
+    '=': 'eq',
+    '<': 'lt',
+    '>': 'gt',
+    '<=': 'le', '≤': 'le',
+    '>=': 'ge', '≥': 'ge'
+}
+
+valid_ops = [
+    'push', 'pop', 'dup', 'swap', 'jump',
+    'add', 'sub', 'mul', 'div', 'pow',
+    'eq', 'lt', 'gt', 'le', 'ge',
+    'not'
+]
+
+arg_types = {
+    'push': [[float]],
+    'pop': [[]],
+    'dup': [[], [int]], 'swap': [[], [int]], 'jump': [[], [int]],
+    'add': [[]], 'sub': [[]], 'mul': [[]], 'div': [[]], 'pow': [[]],
+    'eq': [[]], 'lt': [[]], 'gt': [[]], 'le': [[]], 'ge': [[]],
+    'not': [[]],
+}
+
+
 def parse_program(code):
     r"""
     Take a source code string and yield a sequence of instructions
 
-    >>> list(parse_program('push 1'))
+    >> list(parse_program('push 1'))
     [Instr('push', [1.0])]
 
     Various sigils from_ Unicode are supported as alternate versions of
     operations, for example:
-    >>> list(parse_program('← 1'))
+    >> list(parse_program('← 1'))
     [Instr('push', [1.0])]
-    >>> list(parse_program('↔'))
+    >> list(parse_program('↔'))
     [Instr('swap')]
     """
     for line in re.split('\n|;', code):
@@ -72,6 +86,27 @@ def parse_program(code):
             prefix = None
             op = parts[0]
             args = [float(arg) for arg in parts[1:]]
+        if op in sigil_to_op:
+            op = sigil_to_op[op]
+        if op not in valid_ops:
+            raise ValueError("Unknown opcode '{}'".format(op))
+
+        check_type = {
+            int: lambda x: int(x) == x,
+            float: lambda x: isinstance(x, float),
+        }
+        arg_type_list = arg_types[op]
+        typechecked = False
+        for types in arg_type_list:
+            if len(types) != len(args):
+                continue
+            if all(check_type[t](arg) for t, arg in zip(types, args)):
+                typechecked = True
+                break
+        if not typechecked:
+            raise ValueError(
+                "Arguments for '{}' must be one of {}, were {}".format(
+                    op, ', '.join(str(item) for item in arg_type_list), args))
         yield Instr(op, args, prefix)
 
 
@@ -109,7 +144,8 @@ def eval_program(program):
             if dup_depth == 0:
                 continue
             if dup_depth > len(stack):
-                raise IndexError
+                raise IndexError("Cannot dup {} elements, stack has {}".format(
+                    dup_depth, len(stack)))
             stack.extend(stack[-dup_depth:])
         elif instr.op in unary_ops:
             if 'quiet' in instr.prefix:
@@ -129,7 +165,8 @@ def eval_program(program):
             # at the beginning of the loop.
             current_instr += int(jump_distance) - 1
             if current_instr > len(instructions) or current_instr < 0:
-                raise IndexError
+                raise IndexError("Jump address {} out of bounds ({})".format(
+                    current_instr, len(instructions)-1))
     return stack
 
 
@@ -152,4 +189,4 @@ unary_ops = {
 }
 
 
-print(eval_program("push 1; push 2; add; push 5; multiply; push 3; divide"))
+print(eval_program("push 1; push 2; add; push 5; mul; push 3; div"))
