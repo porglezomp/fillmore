@@ -80,29 +80,66 @@ def parse_program(code):
             current_index += 1
             prefix = []
             args = []
+            op = None
             for part in parts:
+                if part in sigil_to_op:
+                    part = sigil_to_op[part]
+
                 if part in prefixes:
                     prefix.append(prefixes[part])
-                # We convert labels to their relative jump form
-                # TODO: This also converts labels on their own line
-                # Ex: @label_here == 2
-                # Which might be bad?
+                elif part in ops:
+                    if op == None:
+                        op = part
+                    else:
+                        print(op + part)
+                        raise ValueError("Two opcodes found in instruction: " + part + " and " + op)
+                # We convert labels to an absolute jump.
                 elif is_label(part):
                     op = 'to'
-                    # Increment the index by one because we
-                    # jump to the instruction right after the label
                     args.append(float(label_indexes[part]))
-                # Not a label or a prefix.
+                # Test if part is an arguement.
+                elif is_number(part):
+                    args.append(float(part))
                 else:
-                    # Test if argument
-                    try:
-                        args.append(float(part))
-                    except ValueError:
-                        op = part
+                    raise ValueError("Unknown Instruction: " + line)
+            if op == None:
+                raise ValueError("No opcode in instruction")
             yield Instr(op, args, prefix)
 
 def is_label(label):
     return label[0] == '@'
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+sigil_to_op = {
+    '←': 'push', '→': 'pop',
+    '↔': 'swap',
+    '↑': 'jump',
+    '+': 'add',
+    '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
+    '*': 'mul', '×': 'mul',
+    '/': 'div', '÷': 'div',
+    '^': 'pow',
+    '!': 'not', '¬': 'not',
+    '=': 'eq',
+    '<': 'lt',
+    '>': 'gt',
+    '<=': 'le', '≤': 'le',
+    '>=': 'ge', '≥': 'ge'
+}
+
+ops = [
+    'push', 'pop', 'dup', 'swap', 'jump', 
+    'add', 'sub', 'mul', 'div', 'pow', 
+    'eq', 'lt', 'gt', 'le', 'ge', 
+    'not', 'jump', 'to'
+]
 
 
 prefixes = {

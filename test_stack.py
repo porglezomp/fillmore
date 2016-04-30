@@ -40,6 +40,16 @@ def test_parse_quiet():
         assert list(stack.parse_program(quiet + ' jump')) == expected
 
 
+def test_parse_invalid():
+    programs = ['quiet ad 6', 
+                'pop push',
+                'push 1 add',
+                '1']
+    for program in programs:
+        with pytest.raises(ValueError):    
+            next(stack.parse_program(program))
+
+
 def test_push_and_pop():
     assert eval_program("push 1; push 2; push 3;") == [1, 2, 3]
     assert eval_program("push 2; pop") == []
