@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-import re
+import itertools
 
 
 class Instr(object):
@@ -61,6 +61,17 @@ arg_types = {
 }
 
 
+def split_code(text):
+    lines = (line.strip() for line in text.split('\n'))
+    # We want to skip all comment lines
+    lines = (line for line in lines if line and line[0] != ':')
+    # Here lines is an iterable of lines that are not comments
+    items = itertools.chain(*(line.split(';') for line in lines))
+    items = (item.strip() for item in items)
+    # We want to skip all empty strings
+    return (item for item in items if item)
+
+
 def parse_program(code):
     r"""
     Take a source code string and yield a sequence of instructions
@@ -75,8 +86,8 @@ def parse_program(code):
     >> list(parse_program('↔'))
     [Instr('swap')]
     """
-    for line in re.split('\n|;', code):
-        parts = line.strip().split()
+    for instruction in split_code(code):
+        parts = instruction.split()
         if not parts:
             continue
         # TODO: This only checks for 'quiet' as a prefix but should allow

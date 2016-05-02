@@ -7,6 +7,17 @@ from stack import eval_program, Instr
 import pytest
 
 
+def test_split_code():
+    assert list(stack.split_code('hello\nworld')) == ['hello', 'world']
+    assert list(stack.split_code('hello;world')) == ['hello', 'world']
+    assert list(stack.split_code('hello \n world')) == ['hello', 'world']
+    assert list(stack.split_code('hello;\nworld;')) == ['hello', 'world']
+    assert list(stack.split_code('   ;;\n;; hello  ')) == ['hello']
+    assert list(stack.split_code(': comment')) == []
+    assert list(stack.split_code(': comment with ; in it')) == []
+    assert list(stack.split_code(': comment\nadd')) == ['add']
+
+
 def test_parse():
     expected = [Instr('push', [1]), Instr('pop'), Instr('swap')]
     # Any mix of semicolons and newlines should work
@@ -21,10 +32,15 @@ def test_parse():
         list(stack.parse_program('horp; push 0'))
 
 
-# def test_parse_unicode():
-#     for sigil in stack.sigil_to_op:
-#         instruction = next(stack.parse_program(sigil))
-#         assert instruction == Instr(stack.sigil_to_op[sigil])
+def test_comments():
+    code = (': this is a comment\n' +
+            ': this is another; add 1')
+    assert list(stack.parse_program(code)) == []
+    code = '    : this is a comment with leading whitespace'
+    assert list(stack.parse_program(code)) == []
+    code = (':  comment\n' +
+            'add')
+    assert list(stack.parse_program(code)) == [Instr('add')]
 
 
 def test_parse_quiet():
