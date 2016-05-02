@@ -38,14 +38,16 @@ sigil_to_op = {
     '<': 'lt',
     '>': 'gt',
     '<=': 'le', '≤': 'le',
-    '>=': 'ge', '≥': 'ge'
+    '>=': 'ge', '≥': 'ge',
+    '∅': 'nop',
 }
 
 valid_ops = [
     'push', 'pop', 'dup', 'swap', 'jump',
     'add', 'sub', 'mul', 'div', 'pow',
     'eq', 'lt', 'gt', 'le', 'ge',
-    'not'
+    'not',
+    'nop',
 ]
 
 arg_types = {
@@ -55,6 +57,7 @@ arg_types = {
     'add': [[]], 'sub': [[]], 'mul': [[]], 'div': [[]], 'pow': [[]],
     'eq': [[]], 'lt': [[]], 'gt': [[]], 'le': [[]], 'ge': [[]],
     'not': [[]],
+    'nop': [[]],
 }
 
 
@@ -167,6 +170,10 @@ def eval_program(program):
             if current_instr > len(instructions) or current_instr < 0:
                 raise IndexError("Jump address {} out of bounds ({})".format(
                     current_instr, len(instructions)-1))
+        elif instr.op == 'nop':
+            pass
+        else:
+            raise ValueError('Unknown instruction {}'.format(instr))
     return stack
 
 
