@@ -4,29 +4,9 @@ import re
 
 
 class Instr(object):
-    sigil_to_op = {
-        '←': 'push', '→': 'pop',
-        '↔': 'swap',
-        '↑': 'jump',
-        '+': 'add',
-        '-': 'sub', '−': 'sub',  # A minus isn't the same thing as a hyphen!
-        '*': 'mul', '×': 'mul',
-        '/': 'div', '÷': 'div',
-        '^': 'pow',
-        '!': 'not', '¬': 'not',
-        '=': 'eq',
-        '<': 'lt',
-        '>': 'gt',
-        '<=': 'le', '≤': 'le',
-        '>=': 'ge', '≥': 'ge'
-    }
-
     def __init__(self, op, args=None, prefix=None):
         args = [] if args is None else args
         prefix = [] if prefix is None else prefix
-
-        if op in Instr.sigil_to_op:
-            op = Instr.sigil_to_op[op]
         self.op, self.args, self.prefix = op, args, prefix
 
     def __repr__(self):
@@ -44,85 +24,11 @@ class Instr(object):
                 self.prefix == other.prefix)
 
 
-def parse_program(code):
-    r"""
-    Take a source code string and yield a sequence of instructions
-
-    >>> list(parse_program('push 1'))
-    [Instr('push', [1.0])]
-
-    Various sigils from_ Unicode are supported as alternate versions of
-    operations, for example:
-    >>> list(parse_program('← 1'))
-    [Instr('push', [1.0])]
-    >>> list(parse_program('↔'))
-    [Instr('swap')]
-
-    Prefixes are placed before the instruction
-    Some prefixes also have sigils
-    >>> list(parse_program('♯ +'))
-    [Instr('add', [], ['quiet'])]
-    """
-    split_program = re.split('\n|;', code)
-    label_indexes = get_label_indexes(split_program);
-    # Represents ONLY instruction indexes
-    # Used to map labels and index numbers.
-    current_index = 0
-    for line in split_program:
-        # TODO: Disallow `@label add 1`, `add @label 1`, etc
-        # `@label; add 1` is ok though.
-        parts = line.strip().split()
-        # Ignore newlines 
-        if not parts or is_label(parts[0]):
-            continue
-#       elif any(is_label(part) for part in parts) and 'jump' not in parts:
-#            raise ValueError("The instruction, {}, contains both a label and an instruction".format(line))
-        # Process an actual instruction
-        else:
-            current_index += 1
-            has_label = False
-            prefix = []
-            args = []
-            op = None
-            for part in parts:
-                if part in sigil_to_op:
-                    part = sigil_to_op[part]
-                # A label on the same line as an instruction is an error.
-
-                if part in prefixes:
-                    prefix.append(prefixes[part])
-                elif part in ops:
-                    if op == None:
-                        op = part
-                    else:
-                        raise ValueError("Two opcodes found in instruction: " + part + " and " + op)
-                # We convert labels to an absolute jump.
-                elif is_label(part):
-                    has_label = True
-                    if op not in ['jump', 'to']:
-                        raise ValueError("Cannot use {} with a label".format(op))
-                    if part not in label_indexes:
-                        raise ValueError("The label, {}, was not defined".format(part))
-                    op = 'to'
-                    args.append(float(label_indexes[part]))
-                # Test if part is an arguement.
-                elif is_number(part):
-                    args.append(float(part))
-                else:
-                    raise ValueError("Unknown Instruction: " + line)
-            if op == None:
-                raise ValueError("No opcode in instruction")
-            yield Instr(op, args, prefix)
-
-def is_label(label):
-    return label[0] == '@'
-
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
+prefixes = {
+    'quiet': 'quiet',
+    '#': 'quiet',
+    '♯': 'quiet'
+}
 
 
 sigil_to_op = {
@@ -139,22 +45,118 @@ sigil_to_op = {
     '<': 'lt',
     '>': 'gt',
     '<=': 'le', '≤': 'le',
-    '>=': 'ge', '≥': 'ge'
+    '>=': 'ge', '≥': 'ge',
+    '∅': 'nop',
 }
 
-ops = [
-    'push', 'pop', 'dup', 'swap', 'jump', 
-    'add', 'sub', 'mul', 'div', 'pow', 
-    'eq', 'lt', 'gt', 'le', 'ge', 
-    'not', 'jump', 'to'
+valid_ops = [
+    'push', 'pop', 'dup', 'swap', 'jump',
+    'add', 'sub', 'mul', 'div', 'pow',
+    'eq', 'lt', 'gt', 'le', 'ge',
+    'not',
+    'to', 'jump',
+    'nop'
 ]
 
-
-prefixes = {
-    'quiet': 'quiet',
-    '#': 'quiet',
-    '♯': 'quiet'
+arg_types = {
+    'push': [[float]],
+    'pop': [[]],
+    'dup': [[], [int]], 'swap': [[], [int]], 'jump': [[], [int]], 'to': [[], [int]],
+    'add': [[]], 'sub': [[]], 'mul': [[]], 'div': [[]], 'pow': [[]],
+    'eq': [[]], 'lt': [[]], 'gt': [[]], 'le': [[]], 'ge': [[]],
+    'not': [[]],
+    'nop': [[]],
 }
+
+
+def parse_program(code):
+    r"""
+    Take a source code string and yield a sequence of instructions
+
+    >> list(parse_program('push 1'))
+    [Instr('push', [1.0])]
+
+    Various sigils from_ Unicode are supported as alternate versions of
+    operations, for example:
+    >> list(parse_program('← 1'))
+    [Instr('push', [1.0])]
+    >> list(parse_program('↔'))
+    [Instr('swap')]
+
+    Prefixes are placed before the instruction
+    Some prefixes also have sigils
+    >>> list(parse_program('♯ +'))
+    [Instr('add', [], ['quiet'])]
+    """
+    split_program = re.split('\n|;', code)
+    label_indexes = get_label_indexes(split_program);
+    # Represents ONLY instruction indexes
+    # Used to map labels and index numbers.
+    for line in split_program:
+        parts = line.strip().split()
+        # Ignore newlines 
+        if not parts or is_label(parts[0]):
+            continue
+        
+        # Process the instruction
+        op = None
+        args = []
+        prefix = []
+        label = None
+        for part in parts:
+            # Check for two labels in instruction.
+            if label and is_label(part):
+                raise ValueError("Two labels on instruction {}".format(line))
+
+            if part in valid_ops:
+                op = part
+            elif part in sigil_to_op:
+                op = sigil_to_op[part]
+            elif part in prefixes:
+                prefix.append(prefixes[part])
+            elif is_label(part):
+                label = part
+            try:
+                args.append(float(part))
+            except ValueError:
+                pass
+
+        # Undefined label.
+        if label not in label_indexes and label is not None:
+            raise ValueError("The label, {}, was not defined".format(label))
+        # Not a naked label or not an op which supports labels
+        if op not in ['jump', 'to', None] and label:
+            raise ValueError("Cannot use label with {}".format(op))
+        # Not an instruction or missing label
+        if op is None and label is None:
+            raise ValueError("Syntax Error: {}".format(line))
+        # Handle jump @label.
+        if op == 'jump' and label:
+            op = 'to'
+            args.append(float(label_indexes[label]))
+
+        # Type check the instruction
+        check_type = {
+            int: lambda x: int(x) == x,
+            float: lambda x: isinstance(x, float),
+        }
+        arg_type_list = arg_types[op]
+        typechecked = False
+        for types in arg_type_list:
+            if len(types) != len(args):
+                continue
+            if all(check_type[t](arg) for t, arg in zip(types, args)):
+                typechecked = True
+                break
+        if not typechecked:
+            raise ValueError(
+                "Arguments for '{}' must be one of {}, were {}".format(
+                    op, ', '.join(str(item) for item in arg_type_list), args))
+        yield Instr(op, args, prefix)
+
+
+def is_label(label):
+    return label[0] == '@'
 
 
 def get_label_indexes(split_program):
@@ -185,9 +187,9 @@ def eval_program(program):
     while current_instr < len(instructions):
         instr = instructions[current_instr]
         current_instr += 1
-        if instr.op == "push":
+        if instr.op == 'push':
             stack.append(instr.args[0])
-        elif instr.op == "pop":
+        elif instr.op == 'pop':
             stack.pop()
         elif instr.op in binary_ops:
             if 'quiet' in instr.prefix:
@@ -212,7 +214,8 @@ def eval_program(program):
             if dup_depth == 0:
                 continue
             if dup_depth > len(stack):
-                raise IndexError
+                raise IndexError("Cannot dup {} elements, stack has {}".format(
+                    dup_depth, len(stack)))
             stack.extend(stack[-dup_depth:])
         elif instr.op in unary_ops:
             if 'quiet' in instr.prefix:
@@ -244,7 +247,12 @@ def eval_program(program):
                 raise TypeError("Expected an integer, got a: " + jump_to)
             current_instr = int(jump_to)
             if current_instr >= len(instructions) or current_instr <= 0:
-                raise IndexError
+                raise IndexError("Jump address {} out of bounds ({})".format(
+                    current_instr, len(instructions)-1))
+        elif instr.op == 'nop':
+            pass
+        else:
+            raise ValueError('Unknown instruction {}'.format(instr))
     return stack
 
 
