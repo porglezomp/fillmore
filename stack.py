@@ -75,15 +75,19 @@ def parse_program(code):
         # Ignore newlines 
         if not parts or is_label(parts[0]):
             continue
+#       elif any(is_label(part) for part in parts) and 'jump' not in parts:
+#            raise ValueError("The instruction, {}, contains both a label and an instruction".format(line))
         # Process an actual instruction
         else:
             current_index += 1
+            has_label = False
             prefix = []
             args = []
             op = None
             for part in parts:
                 if part in sigil_to_op:
                     part = sigil_to_op[part]
+                # A label on the same line as an instruction is an error.
 
                 if part in prefixes:
                     prefix.append(prefixes[part])
@@ -91,10 +95,12 @@ def parse_program(code):
                     if op == None:
                         op = part
                     else:
-                        print(op + part)
                         raise ValueError("Two opcodes found in instruction: " + part + " and " + op)
                 # We convert labels to an absolute jump.
                 elif is_label(part):
+                    has_label = True
+                    if part not in label_indexes:
+                        raise ValueError("The label, {}, was not defined".format(part))
                     op = 'to'
                     args.append(float(label_indexes[part]))
                 # Test if part is an arguement.
@@ -156,6 +162,10 @@ def get_label_indexes(split_program):
         parts = line.strip().split()
         if not parts:
             continue
+        # Two labels in a program is an error.
+        if parts[0] in label_indexes:
+            raise ValueError("Found the label {} on lines {} and {}"
+                .format(parts[0], label_indexes[parts[0]], current_index))
         if is_label(parts[0]):
             label_indexes[parts[0]] = current_index
             continue

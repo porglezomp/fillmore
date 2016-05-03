@@ -2,7 +2,7 @@
 from __future__ import division
 
 import stack
-from stack import eval_program, Instr
+from stack import eval_program, parse_program, Instr
 
 import pytest
 
@@ -15,29 +15,29 @@ def test_unicode_sigil():
 def test_parse():
     expected = [Instr('push', [1]), Instr('pop'), Instr('swap')]
     # Any mix of semicolons and newlines should work
-    assert list(stack.parse_program('push 1\npop\nswap')) == expected
-    assert list(stack.parse_program('push 1; pop; swap')) == expected
-    assert list(stack.parse_program('push 1; pop\nswap')) == expected
+    assert list(parse_program('push 1\npop\nswap')) == expected
+    assert list(parse_program('push 1; pop; swap')) == expected
+    assert list(parse_program('push 1; pop\nswap')) == expected
     # Spaces shouldn't matter for semicolons
-    assert list(stack.parse_program('push 1 ;pop;  swap')) == expected
+    assert list(parse_program('push 1 ;pop;  swap')) == expected
     # And empty instructions should be skipped
-    assert list(stack.parse_program('push 1 ;;; pop\n;\nswap')) == expected
+    assert list(parse_program('push 1 ;;; pop\n;\nswap')) == expected
 
 
 def test_parse_unicode():
     for sigil in Instr.sigil_to_op:
-        instruction = next(stack.parse_program(sigil))
+        instruction = next(parse_program(sigil))
         assert instruction == Instr(Instr.sigil_to_op[sigil])
 
 
 def test_parse_quiet():
     expected = [Instr('div', prefix=[]), Instr('add', prefix=['quiet'])]
-    assert list(stack.parse_program('div; quiet add')) == expected
+    assert list(parse_program('div; quiet add')) == expected
     expected = Instr('jump', prefix=['quiet'])
-    assert next(stack.parse_program('quiet jump')) == expected
+    assert next(parse_program('quiet jump')) == expected
     for quiet in ["#", "♯", "quiet"]:
         expected = [Instr('jump', prefix=['quiet'])]
-        assert list(stack.parse_program(quiet + ' jump')) == expected
+        assert list(parse_program(quiet + ' jump')) == expected
 
 
 def test_parse_invalid():
@@ -47,7 +47,7 @@ def test_parse_invalid():
                 '1']
     for program in programs:
         with pytest.raises(ValueError):    
-            next(stack.parse_program(program))
+            next(parse_program(program))
 
 
 def test_push_and_pop():
@@ -213,7 +213,7 @@ def test_jump_labels():
     # A jump label should be converted into relative jumps at parse time.
     expected = [Instr('push', [1]), Instr('push', [2]), Instr('to', [0])]
     program = "@start\npush 1; push 2; jump @start"
-    assert list(stack.parse_program(program)) == expected
+    assert list(parse_program(program)) == expected
 
     # Multiple jump labels should work.
 
@@ -232,7 +232,7 @@ def test_fibonacci():
     dup
     swap 2
     add
-    @decement_n
+    @decrement_n
     swap 2
     push -1
     add
@@ -273,3 +273,27 @@ def test_illegal_jump():
     # but shouldn't be able to jump to floats,
     with pytest.raises(TypeError):
         eval_program('push 4; push 5; div; to')
+
+
+def test_bad_labels():
+    # A missing jump label is an error.
+    with pytest.raises(ValueError):
+        code = 'jump @missing_label'
+        next(parse_program(code))
+    # Two labels with the same name is an error.
+    with pytest.raises(ValueError):
+        code = '@label; push 2; @label; add'
+        next(parse_program(code))
+        # Two labels with the same name is an error.
+    # Multiple jumps to the same label are fine however.
+    code = '@label; push 2; jump @label; jump @label'
+    list(parse_program(code))
+    # # Labels on the same line as an instruction is an error
+    # with pytest.raises(ValueError):
+    #     code = '@label add; push 1'
+    #     next(parse_program(code))
+    # with pytest.raises(ValueError):
+    #     code = 'add @label; push 1'
+    #     next(parse_program(code))
+
+
