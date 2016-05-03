@@ -99,6 +99,8 @@ def parse_program(code):
                 # We convert labels to an absolute jump.
                 elif is_label(part):
                     has_label = True
+                    if op not in ['jump', 'to']:
+                        raise ValueError("Cannot use {} with a label".format(op))
                     if part not in label_indexes:
                         raise ValueError("The label, {}, was not defined".format(part))
                     op = 'to'
@@ -167,8 +169,11 @@ def get_label_indexes(split_program):
             raise ValueError("Found the label {} on lines {} and {}"
                 .format(parts[0], label_indexes[parts[0]], current_index))
         if is_label(parts[0]):
-            label_indexes[parts[0]] = current_index
-            continue
+            if len(parts) != 1:
+                raise ValueError("{} has a label before an instruction.".format(line))
+            else:
+                label_indexes[parts[0]] = current_index
+                continue
         current_index += 1
     return label_indexes
 

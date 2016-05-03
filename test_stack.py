@@ -279,21 +279,28 @@ def test_bad_labels():
     # A missing jump label is an error.
     with pytest.raises(ValueError):
         code = 'jump @missing_label'
-        next(parse_program(code))
+        list(parse_program(code))
     # Two labels with the same name is an error.
     with pytest.raises(ValueError):
         code = '@label; push 2; @label; add'
-        next(parse_program(code))
+        list(parse_program(code))
         # Two labels with the same name is an error.
     # Multiple jumps to the same label are fine however.
     code = '@label; push 2; jump @label; jump @label'
     list(parse_program(code))
-    # # Labels on the same line as an instruction is an error
-    # with pytest.raises(ValueError):
-    #     code = '@label add; push 1'
-    #     next(parse_program(code))
-    # with pytest.raises(ValueError):
-    #     code = 'add @label; push 1'
-    #     next(parse_program(code))
+
+def test_label_with_instruction():
+    # Labels before an instruction are an error.
+    with pytest.raises(ValueError):
+        list(parse_program('@label; @label add;'))
+    with pytest.raises(ValueError):
+        list(parse_program('@label; @label jump;'))
+    # If there is a label and the opcode isn't jump or to, then that's an error.
+    with pytest.raises(ValueError):
+        list(parse_program('@label; add @label;'))
+    list(parse_program('@label; jump @label'))
+    list(parse_program('@label; to @label'))
+
+
 
 
