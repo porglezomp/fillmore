@@ -24,6 +24,13 @@ class Instr(object):
                 self.prefix == other.prefix)
 
 
+prefixes = {
+    'quiet': 'quiet',
+    '#': 'quiet',
+    '♯': 'quiet'
+}
+
+
 sigil_to_op = {
     '←': 'push', '→': 'pop',
     '↔': 'swap',
@@ -47,13 +54,14 @@ valid_ops = [
     'add', 'sub', 'mul', 'div', 'pow',
     'eq', 'lt', 'gt', 'le', 'ge',
     'not',
-    'nop',
+    'to', 'jump',
+    'nop'
 ]
 
 arg_types = {
     'push': [[float]],
     'pop': [[]],
-    'dup': [[], [int]], 'swap': [[], [int]], 'jump': [[], [int]],
+    'dup': [[], [int]], 'swap': [[], [int]], 'jump': [[], [int]], 'to': [[], [int]],
     'add': [[]], 'sub': [[]], 'mul': [[]], 'div': [[]], 'pow': [[]],
     'eq': [[]], 'lt': [[]], 'gt': [[]], 'le': [[]], 'ge': [[]],
     'not': [[]],
@@ -74,26 +82,60 @@ def parse_program(code):
     [Instr('push', [1.0])]
     >> list(parse_program('↔'))
     [Instr('swap')]
-    """
-    for line in re.split('\n|;', code):
-        parts = line.strip().split()
-        if not parts:
-            continue
-        # TODO: This only checks for 'quiet' as a prefix but should allow
-        # "#" and "♯" as equlivlent (move it to Instr.)
-        if parts[0] == 'quiet':
-            prefix = ['quiet']
-            op = parts[1]
-            args = [float(arg) for arg in parts[2:]]
-        else:
-            prefix = None
-            op = parts[0]
-            args = [float(arg) for arg in parts[1:]]
-        if op in sigil_to_op:
-            op = sigil_to_op[op]
-        if op not in valid_ops:
-            raise ValueError("Unknown opcode '{}'".format(op))
 
+    Prefixes are placed before the instruction
+    Some prefixes also have sigils
+    >>> list(parse_program('♯ +'))
+    [Instr('add', [], ['quiet'])]
+    """
+    split_program = re.split('\n|;', code)
+    label_indexes = get_label_indexes(split_program);
+    # Represents ONLY instruction indexes
+    # Used to map labels and index numbers.
+    for line in split_program:
+        parts = line.strip().split()
+        # Ignore newlines 
+        if not parts or is_label(parts[0]):
+            continue
+        
+        # Process the instruction
+        op = None
+        args = []
+        prefix = []
+        label = None
+        for part in parts:
+            # Check for two labels in instruction.
+            if label and is_label(part):
+                raise ValueError("Two labels on instruction {}".format(line))
+
+            if part in valid_ops:
+                op = part
+            elif part in sigil_to_op:
+                op = sigil_to_op[part]
+            elif part in prefixes:
+                prefix.append(prefixes[part])
+            elif is_label(part):
+                label = part
+            try:
+                args.append(float(part))
+            except ValueError:
+                pass
+
+        # Undefined label.
+        if label not in label_indexes and label is not None:
+            raise ValueError("The label, {}, was not defined".format(label))
+        # Not a naked label or not an op which supports labels
+        if op not in ['jump', 'to', None] and label:
+            raise ValueError("Cannot use label with {}".format(op))
+        # Not an instruction or missing label
+        if op is None and label is None:
+            raise ValueError("Syntax Error: {}".format(line))
+        # Handle jump @label.
+        if op == 'jump' and label:
+            op = 'to'
+            args.append(float(label_indexes[label]))
+
+        # Type check the instruction
         check_type = {
             int: lambda x: int(x) == x,
             float: lambda x: isinstance(x, float),
@@ -113,6 +155,31 @@ def parse_program(code):
         yield Instr(op, args, prefix)
 
 
+def is_label(label):
+    return label[0] == '@'
+
+
+def get_label_indexes(split_program):
+    label_indexes = {}
+    current_index = 0
+    for line in split_program:
+        parts = line.strip().split()
+        if not parts:
+            continue
+        # Two labels in a program is an error.
+        if parts[0] in label_indexes:
+            raise ValueError("Found the label {} on lines {} and {}"
+                .format(parts[0], label_indexes[parts[0]], current_index))
+        if is_label(parts[0]):
+            if len(parts) != 1:
+                raise ValueError("{} has a label before an instruction.".format(line))
+            else:
+                label_indexes[parts[0]] = current_index
+                continue
+        current_index += 1
+    return label_indexes
+
+
 def eval_program(program):
     instructions = list(parse_program(program))
     stack = []
@@ -120,9 +187,9 @@ def eval_program(program):
     while current_instr < len(instructions):
         instr = instructions[current_instr]
         current_instr += 1
-        if instr.op == "push":
+        if instr.op == 'push':
             stack.append(instr.args[0])
-        elif instr.op == "pop":
+        elif instr.op == 'pop':
             stack.pop()
         elif instr.op in binary_ops:
             if 'quiet' in instr.prefix:
@@ -168,6 +235,18 @@ def eval_program(program):
             # at the beginning of the loop.
             current_instr += int(jump_distance) - 1
             if current_instr > len(instructions) or current_instr < 0:
+                raise IndexError
+        elif instr.op == 'to':
+            if instr.args:
+                jump_to = instr.args[0]
+            else:
+                jump_to = stack[-1]
+                if 'quiet' not in instr.prefix:
+                    stack.pop()
+            if not float.is_integer(jump_to):
+                raise TypeError("Expected an integer, got a: " + jump_to)
+            current_instr = int(jump_to)
+            if current_instr >= len(instructions) or current_instr <= 0:
                 raise IndexError("Jump address {} out of bounds ({})".format(
                     current_instr, len(instructions)-1))
         elif instr.op == 'nop':
@@ -175,6 +254,12 @@ def eval_program(program):
         else:
             raise ValueError('Unknown instruction {}'.format(instr))
     return stack
+
+
+jump_ops = {
+    'jump',
+    'to',
+}
 
 
 binary_ops = {
