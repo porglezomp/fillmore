@@ -64,7 +64,9 @@ arg_types = {
 def split_code(text):
     lines = (line.strip() for line in text.split('\n'))
     # We want to skip all comment lines
-    lines = (line for line in lines if line and line[0] != ':')
+    lines = (line for line in lines if line and line[0:1] != '::')
+    # And remove all comments from the middle of lines as well
+    lines = (line.split('::')[0].strip() for line in lines)
     # Here lines is an iterable of lines that are not comments
     items = itertools.chain(*(line.split(';') for line in lines))
     items = (item.strip() for item in items)
@@ -79,7 +81,7 @@ def parse_program(code):
     >> list(parse_program('push 1'))
     [Instr('push', [1.0])]
 
-    Various sigils from_ Unicode are supported as alternate versions of
+    Various sigils from Unicode are supported as alternate versions of
     operations, for example:
     >> list(parse_program('← 1'))
     [Instr('push', [1.0])]

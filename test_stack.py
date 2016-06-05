@@ -13,9 +13,10 @@ def test_split_code():
     assert list(stack.split_code('hello \n world')) == ['hello', 'world']
     assert list(stack.split_code('hello;\nworld;')) == ['hello', 'world']
     assert list(stack.split_code('   ;;\n;; hello  ')) == ['hello']
-    assert list(stack.split_code(': comment')) == []
-    assert list(stack.split_code(': comment with ; in it')) == []
-    assert list(stack.split_code(': comment\nadd')) == ['add']
+    assert list(stack.split_code(':: comment')) == []
+    assert list(stack.split_code(':: comment with ; in it')) == []
+    assert list(stack.split_code(':: comment\nadd')) == ['add']
+    assert list(stack.split_code('add :: comment\nadd')) == ['add', 'add']
 
 
 def test_parse():
@@ -33,14 +34,18 @@ def test_parse():
 
 
 def test_comments():
-    code = (': this is a comment\n' +
-            ': this is another; add 1')
+    code = (':: this is a comment\n' +
+            ':: this is another; add 1')
     assert list(stack.parse_program(code)) == []
-    code = '    : this is a comment with leading whitespace'
+    code = '    :: this is a comment with leading whitespace'
     assert list(stack.parse_program(code)) == []
-    code = (':  comment\n' +
+    code = ('::  comment\n' +
             'add')
     assert list(stack.parse_program(code)) == [Instr('add')]
+    code = 'add :: add two numbers together'
+    assert list(stack.parse_program(code)) == [Instr('add')]
+    with pytest.raises(ValueError):
+        list(stack.parse_program(': not a real comment'))
 
 
 def test_parse_quiet():
